@@ -27,7 +27,7 @@ Assets/
       AI/BehaviorTree.cs          Node, Selector, Sequence, Condition, ActionNode
       UI/                         HUD (built in code), touch buttons, Arabic text, sounds
       Editor/                     menu RoadSafety > UI > Create HUD prefab
-    UI/Resources/HUD/             HUD sprites      UI/Resources/Fonts/  Almarai (Arabic, OFL)
+    UI/Resources/HUD/             HUD sprites      UI/Resources/Fonts/  Baloo Bhaijaan (rounded Arabic, OFL)
     Materials/  Prefabs/  Models/  Audio/
   Settings/            <- URP settings from the template (leave as is)
 ```
@@ -85,7 +85,7 @@ The instances are created when the scene loads, so read them in `Start`/`Update`
 **1** / **2** add / remove a star, **3** lose a heart. The current values are shown under the behaviour-tree box.
 
 **Arabic text:** Unity draws Arabic letters unconnected and left-to-right, so always pass texts
-through `ArabicText.Fix("...")` and use the Almarai font (`Resources/Fonts`). Texts are Modern Standard Arabic.
+through `ArabicText.Fix("...")` and use the Baloo Bhaijaan RS font (`Resources/Fonts`): a rounded font, with the joined letter shapes added. Texts are Modern Standard Arabic.
 
 **Sounds:** the HUD makes small cartoon sounds in code. To replace one, drag a clip onto the
 `HUDController` component. The seatbelt voice line ("ضع حزام الأمان") still has to be recorded:

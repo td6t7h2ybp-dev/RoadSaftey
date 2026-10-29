@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 415ef88ff93e482b95b7e5523b5e5c78
+guid: 20cda14c46e24d9daebc121a064af2e9
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Almarai
+  - Baloo Bhaijaan RS
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

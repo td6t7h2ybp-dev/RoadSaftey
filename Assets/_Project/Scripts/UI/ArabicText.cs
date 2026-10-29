@@ -11,7 +11,7 @@ namespace RoadSafety.UI
     ///     label.text = ArabicText.Fix("ضع حزام الأمان!");
     ///     label.text = ArabicText.Fix(longText, 24);   // wraps lines at ~24 characters
     /// </code>
-    /// Use a font that has the Arabic presentation forms (Almarai, in Resources/Fonts) and keep
+    /// Use a font that has the Arabic presentation forms (Baloo Bhaijaan RS, in Resources/Fonts) and keep
     /// the Text component's horizontal overflow on "Overflow": let Fix() do the line breaks,
     /// otherwise Unity wraps the reversed line in the wrong place.
     /// </summary>

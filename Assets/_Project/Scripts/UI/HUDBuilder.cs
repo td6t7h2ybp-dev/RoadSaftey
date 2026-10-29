@@ -15,15 +15,17 @@ namespace RoadSafety.UI
     ///   bottom-right : Go, with the red Stop button under it
     ///
     /// Sprites are in Assets/_Project/UI/Resources/HUD, the Arabic font in .../Resources/Fonts.
+    /// Style: flat colours with a dark-blue outline, Sidi Bou Said blue, door studs, an arched
+    /// blue door around the avatar (Tunisian inspiration, charte: bleu ciel / vert pomme / jaune soleil).
     /// </summary>
     public static class HUDBuilder
     {
         public const string SpriteFolder = "HUD/";
-        public const string FontPath = "Fonts/Almarai-ExtraBold";
+        public const string FontPath = "Fonts/BalooBhaijaanRS-Bold";
 
-        private static readonly Color Navy = new Color32(45, 58, 90, 255);
-        private static readonly Color PanelColor = new Color(1f, 1f, 1f, 0.9f);
-        private static readonly Color OverlayColor = new Color32(196, 236, 255, 242);
+        private static readonly Color Navy = new Color32(22, 50, 92, 255);   // same dark blue as the sprite outlines
+        private static readonly Color PanelColor = Color.white;   // the panel sprite has its own colours
+        private static readonly Color OverlayColor = new Color32(250, 247, 238, 245);   // lime-washed white
 
         private static readonly Vector2 BottomLeft = new Vector2(0f, 0f);
         private static readonly Vector2 BottomCenter = new Vector2(0.5f, 0f);
