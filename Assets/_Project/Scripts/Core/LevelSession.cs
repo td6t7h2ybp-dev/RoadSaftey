@@ -13,7 +13,7 @@ namespace RoadSafety.Core
         public static int Level { get; private set; } = 1;
 
         /// <summary>How many oncoming cars drive on the main road.</summary>
-        public static int OncomingCars => Mathf.Clamp(Level + 1, 1, 4);
+        public static int OncomingCars => Mathf.Clamp(Level + 2, 1, 5);
 
         /// <summary>Speed of the other cars (m/s).</summary>
         public static float TrafficSpeed => 5.5f + 0.75f * (Level - 1);
