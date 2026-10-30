@@ -43,7 +43,7 @@ namespace RoadSafety.Player
         [Tooltip("Editor keyboard: arrows / WASD drive, Space brake, B seatbelt, K horn.")]
         [SerializeField] private bool keyboardControls = true;
 
-        [Tooltip("Show the control values under the behaviour-tree box in the Game view.")]
+        [Tooltip("Show the control values under the behaviour-tree box in the Game view (F1 shows / hides it).")]
         [SerializeField] private bool showDebugOverlay = true;
 
         private bool accelerateHeld, brakeHeld, leftHeld, rightHeld;
@@ -70,7 +70,12 @@ namespace RoadSafety.Player
         /// <summary>-1 = full left, 0 = straight, +1 = full right. Changes progressively.</summary>
         public float Steer => IsLocked ? 0f : steer;
 
-        private bool IsLocked => ProgressionManager.Instance != null && ProgressionManager.Instance.IsRestarting;
+        private float frozenUntil = float.NegativeInfinity;
+
+        /// <summary>True while the car must not move: level restarting or finished, or a short freeze after a bump.</summary>
+        public bool IsLocked =>
+            Time.unscaledTime < frozenUntil ||
+            (ProgressionManager.Instance != null && (ProgressionManager.Instance.IsRestarting || ProgressionManager.Instance.IsLevelOver));
 
         /// <summary>Raised when the seatbelt is fastened (true).</summary>
         public event Action<bool> SeatbeltChanged;
@@ -156,6 +161,12 @@ namespace RoadSafety.Player
             SeatbeltReminder?.Invoke();
         }
 
+        /// <summary>Blocks Go and the steering for a few seconds (after a collision, US 1.5).</summary>
+        public void Freeze(float seconds)
+        {
+            frozenUntil = Mathf.Max(frozenUntil, Time.unscaledTime + seconds);
+        }
+
         /// <summary>Lets go of every held button (focus lost, level restarting...).</summary>
         public void ReleaseAll()
         {
@@ -197,18 +208,20 @@ namespace RoadSafety.Player
 
             if (Input.GetKeyDown(KeyCode.B)) FastenSeatbelt();
             if (Input.GetKeyDown(KeyCode.K)) Honk();
+            if (Input.GetKeyDown(KeyCode.F1)) DebugView.Toggle();
 #endif
         }
 
         private void OnGUI()
         {
-            if (!showDebugOverlay)
+            if (!showDebugOverlay || !DebugView.Visible)
                 return;
-            GUI.Box(new Rect(10, 140, 240, 96), "Driver controls");
-            GUI.Label(new Rect(20, 162, 220, 20), $"Seatbelt: {(SeatbeltOn ? "ON" : "off")}   Throttle: {Throttle:0}");
-            GUI.Label(new Rect(20, 180, 220, 20), $"Brake: {(Braking ? "yes" : "no")}   Steer: {Steer:+0.00;-0.00;0}");
-            GUI.Label(new Rect(20, 200, 220, 20), "Arrows drive | Space brake");
-            GUI.Label(new Rect(20, 216, 220, 20), "B belt | K horn | 1/2 star | 3 heart");
+            float y = DebugView.Top + 130;
+            GUI.Box(new Rect(10, y, 240, 96), "Driver controls");
+            GUI.Label(new Rect(20, y + 22, 220, 20), $"Seatbelt: {(SeatbeltOn ? "ON" : "off")}   Throttle: {Throttle:0}");
+            GUI.Label(new Rect(20, y + 40, 220, 20), $"Brake: {(Braking ? "yes" : "no")}   Steer: {Steer:+0.00;-0.00;0}");
+            GUI.Label(new Rect(20, y + 60, 220, 20), "Arrows drive | Space brake");
+            GUI.Label(new Rect(20, y + 76, 220, 20), "B belt | K horn | 1/2 star | 3 heart");
         }
     }
 }

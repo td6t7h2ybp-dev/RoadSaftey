@@ -120,14 +120,15 @@ namespace RoadSafety.Player
 
         private void OnGUI()
         {
-            if (!showDebugOverlay || game == null)
+            if (!showDebugOverlay || !DebugView.Visible || game == null)
                 return;
-            GUI.Box(new Rect(10, 10, 240, 122), "Player behaviour tree");
-            GUI.Label(new Rect(20, 32, 220, 20), $"Health: {game.Health:0}");
-            GUI.Label(new Rect(20, 50, 220, 20), $"Stamina: {game.Stamina:0}");
-            GUI.Label(new Rect(20, 68, 220, 20), $"Enemies: {game.EnemyNumber}");
-            GUI.Label(new Rect(20, 86, 220, 20), $"Action: {CurrentAction}");
-            GUI.Label(new Rect(20, 106, 220, 20), "H damage | E / R add / remove enemy");
+            float y = DebugView.Top;
+            GUI.Box(new Rect(10, y, 240, 122), "Player behaviour tree");
+            GUI.Label(new Rect(20, y + 22, 220, 20), $"Health: {game.Health:0}");
+            GUI.Label(new Rect(20, y + 40, 220, 20), $"Stamina: {game.Stamina:0}");
+            GUI.Label(new Rect(20, y + 58, 220, 20), $"Enemies: {game.EnemyNumber}");
+            GUI.Label(new Rect(20, y + 76, 220, 20), $"Action: {CurrentAction}");
+            GUI.Label(new Rect(20, y + 96, 220, 20), "H damage | E / R add / remove enemy");
         }
     }
 }

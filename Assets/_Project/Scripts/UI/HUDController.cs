@@ -10,15 +10,17 @@ using RoadSafety.Player;
 namespace RoadSafety.UI
 {
     /// <summary>
-    /// The in-game HUD (Day 1, Ranim):
+    /// The in-game HUD:
     ///   - Go / Stop / left / right buttons -> DriverControls (US 1.1, 1.2)
     ///   - seatbelt button + avatar with / without seatbelt + voice reminder (US 1.3)
     ///   - horn button with a soft sound (US 1.4)
     ///   - star counter with a flying star, "pop" and joyful sound (US 3.1)
     ///   - 3 hearts and a gentle "let's try again" screen before the restart (US 3.4)
-    /// The HUD only talks to DriverControls and ProgressionManager; it never touches the car.
-    /// It is built in code by HUDBuilder (no scene editing needed), or from a prefab made with
-    /// the menu RoadSafety > UI > Create HUD prefab.
+    ///   - speech bubble + voice for every message of the game (GameMessages.Say, US 4.1)
+    ///   - danger sign when the behaviour tree sees something in front of the car
+    ///   - settings (US 4.4), badges (US 3.2) and the end-of-level screen (US 3.3)
+    /// The HUD only talks to DriverControls, ProgressionManager and GameMessages; it never
+    /// touches the car. It is built in code by HUDBuilder (no scene editing needed).
     /// </summary>
     public class HUDController : MonoBehaviour
     {
@@ -28,6 +30,7 @@ namespace RoadSafety.UI
         {
             public Font font;
             public AudioSource audioSource;
+            public AudioSource voiceSource;
 
             [Header("Driving buttons")]
             public TouchButton go;
@@ -35,6 +38,11 @@ namespace RoadSafety.UI
             public TouchButton left;
             public TouchButton right;
             public TouchButton horn;
+
+            [Header("Menu buttons")]
+            public TouchButton settingsButton;
+            public TouchButton badgesButton;
+            public Text levelText;
 
             [Header("Seatbelt")]
             public TouchButton belt;
@@ -45,6 +53,7 @@ namespace RoadSafety.UI
             public Image avatarImage;
             public Sprite avatarNoBelt;
             public Sprite avatarBelt;
+            public RectTransform danger;
 
             [Header("Speech bubble")]
             public RectTransform bubble;
@@ -65,12 +74,13 @@ namespace RoadSafety.UI
             public CanvasGroup restartOverlay;
             public RectTransform restartHeart;
             public Text restartText;
-        }
 
-        // Modern Standard Arabic (not Tunisian dialect), as asked by the client.
-        public const string BeltReminderText = "ضع حزام الأمان\nقبل أن تنطلق!";
-        public const string BeltDoneText = "أحسنت! حزام الأمان يحميك";
-        public const string RestartMessage = "لا بأس! لنحاول مرة أخرى";
+            [Header("Menus")]
+            public BadgePopup badgePopup;
+            public SettingsMenu settingsMenu;
+            public BadgeMenu badgeMenu;
+            public EndScreen endScreen;
+        }
 
         [SerializeField] private Refs ui = new Refs();
 
@@ -81,21 +91,24 @@ namespace RoadSafety.UI
         [SerializeField] private AudioClip reminderSound;
         [SerializeField] private AudioClip starLostSound;
         [SerializeField] private AudioClip heartLostSound;
-
-        [Tooltip("Recorded Arabic voice: \"ضع حزام الأمان\". If empty, Resources/Audio/VO_Seatbelt_ar is used when it exists.")]
-        [SerializeField] private AudioClip seatbeltVoice;
+        [SerializeField] private AudioClip dangerSound;
 
         [Header("Timing")]
-        [SerializeField, Min(0.5f)] private float bubbleDuration = 2.8f;
+        [SerializeField, Min(0.5f)] private float bubbleDuration = 3.5f;
         [SerializeField, Min(0f)] private float firstBeltHintDelay = 1.2f;
+        [Tooltip("At the start of the level, the voice asks for the seatbelt after this delay.")]
+        [SerializeField, Min(0f)] private float startReminderDelay = 2f;
+        [SerializeField, Min(0f)] private float endScreenDelay = 1.6f;
 
         public Refs UI => ui;
 
         private DriverControls controls;
         private ProgressionManager progression;
+        private GameManager game;
         private int shownStars;
         private int shownHearts;
         private Coroutine bubbleRoutine;
+        private Coroutine dangerRoutine;
         private readonly Dictionary<Transform, Coroutine> scaleAnimations = new Dictionary<Transform, Coroutine>();
         private readonly Dictionary<RectTransform, Coroutine> shakeAnimations = new Dictionary<RectTransform, Coroutine>();
         private readonly Dictionary<RectTransform, Vector2> restPositions = new Dictionary<RectTransform, Vector2>();
@@ -104,6 +117,7 @@ namespace RoadSafety.UI
         {
             controls = DriverControls.Instance;
             progression = ProgressionManager.Instance;
+            game = GameManager.Instance;
             if (controls == null || progression == null)
             {
                 Debug.LogError("[HUD] DriverControls or ProgressionManager is missing. GameplayBootstrap adds them to scenes that have a GameManager.", this);
@@ -120,6 +134,8 @@ namespace RoadSafety.UI
             ui.right.HeldChanged += controls.SetSteerRight;
             ui.horn.Pressed += controls.Honk;
             ui.belt.Pressed += OnBeltButton;
+            if (ui.settingsButton != null) ui.settingsButton.Clicked += OpenSettings;
+            if (ui.badgesButton != null) ui.badgesButton.Clicked += OpenBadges;
 
             controls.SeatbeltChanged += OnSeatbeltChanged;
             controls.Honked += OnHonked;
@@ -129,6 +145,13 @@ namespace RoadSafety.UI
             progression.StarLost += OnStarLost;
             progression.HeartsChanged += OnHeartsChanged;
             progression.OutOfHearts += OnOutOfHearts;
+            progression.LevelEnded += OnLevelEnded;
+
+            GameMessages.Said += OnSaid;
+            GameMessages.SfxRequested += Play;
+            Badges.Unlocked += OnBadgeUnlocked;
+            if (game != null)
+                game.StateChanged += OnGameStateChanged;
 
             if (ui.hearts.Length != progression.MaxHearts)
                 Debug.LogWarning($"[HUD] The HUD shows {ui.hearts.Length} hearts but ProgressionManager has {progression.MaxHearts}.", this);
@@ -138,12 +161,15 @@ namespace RoadSafety.UI
             RefreshStars();
             RefreshHearts();
             RefreshSeatbelt();
-            SetVisible(ui.bubbleGroup, false);
-            SetVisible(ui.restartOverlay, false);
+            UIKit.SetVisible(ui.bubbleGroup, false);
+            UIKit.SetVisible(ui.restartOverlay, false);
             if (ui.restartText != null)
-                ui.restartText.text = ArabicText.Fix(RestartMessage);
+                ui.restartText.text = ArabicText.Fix(Lines.TryAgain);
+            if (ui.levelText != null)
+                ui.levelText.text = ArabicText.Fix("المستوى " + LevelSession.Level);
 
             StartCoroutine(SeatbeltHint());
+            StartCoroutine(StartReminder());
         }
 
         private void OnDestroy()
@@ -160,6 +186,29 @@ namespace RoadSafety.UI
                 progression.StarLost -= OnStarLost;
                 progression.HeartsChanged -= OnHeartsChanged;
                 progression.OutOfHearts -= OnOutOfHearts;
+                progression.LevelEnded -= OnLevelEnded;
+            }
+            if (game != null)
+                game.StateChanged -= OnGameStateChanged;
+            GameMessages.Said -= OnSaid;
+            GameMessages.SfxRequested -= Play;
+            Badges.Unlocked -= OnBadgeUnlocked;
+            if (Time.timeScale == 0f)
+                Time.timeScale = 1f;
+        }
+
+        // ---------- Messages (bubble + voice) ----------
+
+        private void OnSaid(string line)
+        {
+            ShowBubble(line);
+            PlayScale(ui.avatar, 1.1f, 0.35f);
+            AudioClip voice = Lines.VoiceFor(line);
+            if (voice != null && ui.voiceSource != null && AudioPrefs.SfxOn)
+            {
+                ui.voiceSource.Stop();
+                ui.voiceSource.clip = voice;
+                ui.voiceSource.Play();
             }
         }
 
@@ -181,13 +230,13 @@ namespace RoadSafety.UI
             Play(seatbeltSound);
             PlayScale(ui.avatar, 1.2f, 0.4f);
             PlayScale(ui.belt.transform, 1.15f, 0.3f);
-            ShowBubble(BeltDoneText);
+            GameMessages.Say(Lines.SeatbeltDone);
         }
 
         private void OnSeatbeltReminder()
         {
-            Play(seatbeltVoice != null ? seatbeltVoice : reminderSound);
-            ShowBubble(BeltReminderText);
+            Play(reminderSound);
+            GameMessages.Say(Lines.SeatbeltFirst);
             PlayScale(ui.belt.transform, 1.3f, 0.5f);
             PlayShake(ui.avatar, 14f, 0.45f);
         }
@@ -210,12 +259,48 @@ namespace RoadSafety.UI
             }
         }
 
+        /// <summary>The voice asks for the seatbelt at the start of the level (US 1.3).</summary>
+        private IEnumerator StartReminder()
+        {
+            yield return new WaitForSeconds(startReminderDelay);
+            if (controls != null && !controls.SeatbeltOn)
+                controls.RemindSeatbelt();
+        }
+
         // ---------- Horn (US 1.4) ----------
 
         private void OnHonked()
         {
             Play(hornSound);
             PlayScale(ui.horn.transform, 1.12f, 0.25f);
+        }
+
+        // ---------- Danger sign (behaviour tree "Avoid") ----------
+
+        private void OnGameStateChanged()
+        {
+            bool show = game != null && game.HasEnemies;
+            if (ui.danger == null || ui.danger.gameObject.activeSelf == show)
+                return;
+            ui.danger.gameObject.SetActive(show);
+            if (show)
+            {
+                Play(dangerSound);
+                if (dangerRoutine != null)
+                    StopCoroutine(dangerRoutine);
+                dangerRoutine = StartCoroutine(PulseDanger());
+            }
+        }
+
+        private IEnumerator PulseDanger()
+        {
+            while (ui.danger != null && ui.danger.gameObject.activeSelf)
+            {
+                float s = 1f + Mathf.Abs(Mathf.Sin(Time.unscaledTime * 5f)) * 0.15f;
+                ui.danger.localScale = Vector3.one * s;
+                yield return null;
+            }
+            dangerRoutine = null;
         }
 
         // ---------- Stars (US 3.1) ----------
@@ -252,12 +337,12 @@ namespace RoadSafety.UI
             image.sprite = ui.starSprite;
             image.raycastTarget = false;
 
-            yield return Animate(0.3f, k => rect.localScale = Vector3.one * EaseOutBack(k) * 1.2f);
-            yield return Animate(0.2f, k => rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(k * Mathf.PI * 2f) * 10f));
+            yield return UIKit.Animate(0.3f, k => rect.localScale = Vector3.one * UIKit.EaseOutBack(k) * 1.2f);
+            yield return UIKit.Animate(0.2f, k => rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(k * Mathf.PI * 2f) * 10f));
 
             Vector3 from = rect.localPosition;
             Vector3 to = ui.flyLayer.InverseTransformPoint(ui.starIcon.rectTransform.position);
-            yield return Animate(0.45f, k =>
+            yield return UIKit.Animate(0.45f, k =>
             {
                 float e = k * k;
                 rect.localPosition = Vector3.Lerp(from, to, e) + Vector3.up * Mathf.Sin(k * Mathf.PI) * 120f;
@@ -289,15 +374,16 @@ namespace RoadSafety.UI
         private IEnumerator EmptyHeart(Image heart)
         {
             Transform t = heart.transform;
-            yield return Animate(0.15f, k => t.localScale = Vector3.one * (1f + 0.3f * k));
+            yield return UIKit.Animate(0.15f, k => t.localScale = Vector3.one * (1f + 0.3f * k));
             heart.sprite = ui.heartEmpty;
-            yield return Animate(0.25f, k => t.localScale = Vector3.one * Mathf.Lerp(1.3f, 1f, EaseOutBack(k)));
+            yield return UIKit.Animate(0.25f, k => t.localScale = Vector3.one * Mathf.Lerp(1.3f, 1f, UIKit.EaseOutBack(k)));
         }
 
         /// <summary>No hearts left: a calm, encouraging screen. ProgressionManager restarts the level.</summary>
         private void OnOutOfHearts()
         {
             controls.ReleaseAll();
+            GameMessages.Say(Lines.TryAgain);
             StartCoroutine(ShowRestartScreen());
         }
 
@@ -307,13 +393,66 @@ namespace RoadSafety.UI
             if (group == null)
                 yield break;
             group.blocksRaycasts = true;
-            yield return Animate(0.5f, k => group.alpha = k);
+            yield return UIKit.Animate(0.5f, k => group.alpha = k);
             while (group != null)
             {
                 if (ui.restartHeart != null)
                     PlayScale(ui.restartHeart, 1.15f, 0.6f);
                 yield return new WaitForSecondsRealtime(0.8f);
             }
+        }
+
+        // ---------- Badges, settings, end of level ----------
+
+        private void OnBadgeUnlocked(BadgeInfo badge)
+        {
+            if (ui.badgePopup != null)
+                ui.badgePopup.Show(badge, () => Play(HUDSounds.Fanfare()));
+            if (ui.endScreen != null)
+                ui.endScreen.RememberBadge(badge);
+        }
+
+        private void OpenSettings()
+        {
+            if (ui.settingsMenu != null && !IsMenuOpen())
+            {
+                controls.ReleaseAll();
+                Play(HUDSounds.Click());
+                ui.settingsMenu.Open();
+            }
+        }
+
+        private void OpenBadges()
+        {
+            if (ui.badgeMenu != null && !IsMenuOpen())
+            {
+                controls.ReleaseAll();
+                Play(HUDSounds.Click());
+                ui.badgeMenu.Open();
+            }
+        }
+
+        private bool IsMenuOpen() =>
+            (ui.settingsMenu != null && ui.settingsMenu.IsOpen) ||
+            (ui.badgeMenu != null && ui.badgeMenu.IsOpen) ||
+            (ui.endScreen != null && ui.endScreen.IsOpen);
+
+        private void OnLevelEnded()
+        {
+            controls.ReleaseAll();
+            StartCoroutine(ShowEndScreen());
+        }
+
+        private IEnumerator ShowEndScreen()
+        {
+            yield return new WaitForSecondsRealtime(endScreenDelay);
+            Play(HUDSounds.Fanfare());
+            if (ui.settingsMenu != null && ui.settingsMenu.IsOpen)
+                ui.settingsMenu.Close();
+            if (ui.badgeMenu != null && ui.badgeMenu.IsOpen)
+                ui.badgeMenu.Close();
+            if (ui.endScreen != null)
+                ui.endScreen.Open(progression);
         }
 
         // ---------- Speech bubble ----------
@@ -332,13 +471,13 @@ namespace RoadSafety.UI
         {
             CanvasGroup group = ui.bubbleGroup;
             float startAlpha = group.alpha;
-            yield return Animate(0.2f, k =>
+            yield return UIKit.Animate(0.2f, k =>
             {
                 group.alpha = Mathf.Lerp(startAlpha, 1f, k);
-                ui.bubble.localScale = Vector3.one * Mathf.Lerp(0.6f, 1f, EaseOutBack(k));
+                ui.bubble.localScale = Vector3.one * Mathf.Lerp(0.6f, 1f, UIKit.EaseOutBack(k));
             });
             yield return new WaitForSecondsRealtime(bubbleDuration);
-            yield return Animate(0.3f, k => group.alpha = 1f - k);
+            yield return UIKit.Animate(0.3f, k => group.alpha = 1f - k);
             bubbleRoutine = null;
         }
 
@@ -352,22 +491,14 @@ namespace RoadSafety.UI
             if (reminderSound == null) reminderSound = HUDSounds.Reminder();
             if (starLostSound == null) starLostSound = HUDSounds.StarLost();
             if (heartLostSound == null) heartLostSound = HUDSounds.HeartLost();
-            if (seatbeltVoice == null) seatbeltVoice = Resources.Load<AudioClip>("Audio/VO_Seatbelt_ar");
+            if (dangerSound == null) dangerSound = HUDSounds.Danger();
         }
 
-        private void Play(AudioClip clip)
+        /// <summary>Plays a sound effect (respects the SFX switch of the settings).</summary>
+        public void Play(AudioClip clip)
         {
-            if (clip != null && ui.audioSource != null)
+            if (clip != null && ui.audioSource != null && AudioPrefs.SfxOn)
                 ui.audioSource.PlayOneShot(clip);
-        }
-
-        private static void SetVisible(CanvasGroup group, bool visible)
-        {
-            if (group == null)
-                return;
-            group.alpha = visible ? 1f : 0f;
-            group.blocksRaycasts = visible;
-            group.interactable = visible;
         }
 
         private static void EnsureEventSystem()
@@ -394,7 +525,7 @@ namespace RoadSafety.UI
             if (scaleAnimations.TryGetValue(target, out Coroutine running) && running != null)
                 StopCoroutine(running);
             target.localScale = Vector3.one;
-            scaleAnimations[target] = StartCoroutine(Animate(duration,
+            scaleAnimations[target] = StartCoroutine(UIKit.Animate(duration,
                 k => target.localScale = Vector3.one * (1f + (peak - 1f) * Mathf.Sin(k * Mathf.PI))));
         }
 
@@ -407,27 +538,8 @@ namespace RoadSafety.UI
                 restPositions[target] = rest = target.anchoredPosition;
             if (shakeAnimations.TryGetValue(target, out Coroutine running) && running != null)
                 StopCoroutine(running);
-            shakeAnimations[target] = StartCoroutine(Animate(duration, k =>
+            shakeAnimations[target] = StartCoroutine(UIKit.Animate(duration, k =>
                 target.anchoredPosition = rest + Vector2.right * Mathf.Sin(k * Mathf.PI * 6f) * amount * (1f - k)));
-        }
-
-        private static IEnumerator Animate(float duration, Action<float> step)
-        {
-            float time = 0f;
-            while (time < duration)
-            {
-                step(time / duration);
-                yield return null;
-                time += Time.unscaledDeltaTime;
-            }
-            step(1f);
-        }
-
-        private static float EaseOutBack(float k)
-        {
-            const float c1 = 1.70158f, c3 = c1 + 1f;
-            float x = k - 1f;
-            return 1f + c3 * x * x * x + c1 * x * x;
         }
     }
 }

@@ -8,9 +8,9 @@ namespace RoadSafety.UI
     /// <summary>
     /// When a scene with a GameManager loads (Main.unity, and the same scene again after a
     /// restart), this adds what the gameplay needs if it isn't already in the scene:
-    ///   _Managers/ProgressionManager, _Managers/DriverControls and UI/HUD.
-    /// So Main.unity doesn't need to be edited for the HUD to work. If you place your own
-    /// HUD prefab (RoadSafety > UI > Create HUD prefab) in the scene, it is used instead.
+    ///   _Managers/ProgressionManager, DriverControls, BadgeTracker, the music and UI/HUD.
+    /// If the scene's player car has no CarController yet (level not built with
+    /// RoadSafety > Level > Build Level 01), a simple one is added so the car still drives.
     /// </summary>
     public static class GameplayBootstrap
     {
@@ -39,6 +39,7 @@ namespace RoadSafety.UI
             if (game == null)
                 return; // not a gameplay scene (menu, credits...)
 
+            Time.timeScale = 1f;
             Transform managers = game.transform.parent != null ? game.transform.parent : game.transform;
 
             if (Object.FindAnyObjectByType<ProgressionManager>() == null)
@@ -47,6 +48,12 @@ namespace RoadSafety.UI
             if (Object.FindAnyObjectByType<DriverControls>() == null)
                 CreateChild<DriverControls>("DriverControls", managers);
 
+            if (Object.FindAnyObjectByType<BadgeTracker>() == null)
+                CreateChild<BadgeTracker>("BadgeTracker", managers);
+
+            MusicPlayer.Ensure();
+            EnsurePlayerCar();
+
             if (Object.FindAnyObjectByType<HUDController>() == null)
             {
                 HUDController hud = HUDBuilder.Build();
@@ -54,6 +61,33 @@ namespace RoadSafety.UI
                 if (uiRoot != null && uiRoot.scene == scene)
                     hud.transform.SetParent(uiRoot.transform, false);
             }
+        }
+
+        private static void EnsurePlayerCar()
+        {
+            if (Object.FindAnyObjectByType<CarController>() != null)
+                return;
+            GameObject car = GameObject.Find("PlayerCar");
+            if (car == null)
+                return;
+            var body = car.GetComponent<Rigidbody>();
+            if (body == null)
+            {
+                body = car.AddComponent<Rigidbody>();
+                body.mass = 1000f;
+            }
+            if (car.GetComponent<Collider>() == null)
+            {
+                var box = car.AddComponent<BoxCollider>();
+                box.center = new Vector3(0f, 0.8f, 0f);
+                box.size = new Vector3(1.8f, 1.2f, 4f);
+            }
+            car.AddComponent<CarController>();
+            car.AddComponent<CrashFeedback>();
+            car.AddComponent<ThreatSensor>();
+            Camera cam = Camera.main;
+            if (cam != null && cam.GetComponent<CameraFollow>() == null)
+                cam.gameObject.AddComponent<CameraFollow>().Target = car.transform;
         }
 
         private static T CreateChild<T>(string name, Transform parent) where T : Component
