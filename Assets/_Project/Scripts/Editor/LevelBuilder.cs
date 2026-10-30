@@ -21,9 +21,11 @@ namespace RoadSafety.EditorTools
     ///   z = 172   garden "حديقة": children play behind a parked louage, a ball rolls out (US 2.3)
     ///   z = 200   mosque with a square minaret
     ///   z = 238   city gate (bab) "وصلت بالسلامة!" = finish (US 3.3)
-    /// Oncoming taxis and louages drive in the other lane, a car crosses at the lights.
+    /// Oncoming taxis and louages drive in the other lane, cars cross at the lights.
+    /// Townspeople walk, chat, sit at the café and wave at the car (LevelBuilder.Town.cs),
+    /// and the HUD is saved in the scene under "UI" so it is visible without pressing Play.
     /// </summary>
-    public static class LevelBuilder
+    public static partial class LevelBuilder
     {
         private const string MaterialDir = "Assets/_Project/Materials/Generated";
         private const string MeshDir = "Assets/_Project/Models/Generated";
@@ -53,12 +55,14 @@ namespace RoadSafety.EditorTools
 
             materials = new Dictionary<string, Material>();
             meshes = new Dictionary<string, Mesh>();
+            shopFronts = new Dictionary<string, Vector2>();
             random = new System.Random(2026);
             EnsureFolder(MaterialDir);
             EnsureFolder(MeshDir);
             EnsureFolder(PrefabDir);
 
             CreateMaterials();
+            CreateTownMaterials();
             Dictionary<string, GameObject> models = CreateVehicleModels();
 
             foreach (string rootName in new[] { "Environment", "Traffic", "Pedestrians", "Rules" })
@@ -84,6 +88,7 @@ namespace RoadSafety.EditorTools
 
             Transform pedestrians = new GameObject("Pedestrians").transform;
             Pedestrian kid = BuildSchoolKid(pedestrians);
+            BuildTownsfolk(pedestrians);
 
             Transform rules = new GameObject("Rules").transform;
             CrosswalkRule crosswalk = BuildRules(rules, light, kid, models);
@@ -91,6 +96,7 @@ namespace RoadSafety.EditorTools
             BuildOtherCars(traffic, models, light, crosswalk);
             SetUpPlayer(models["Car_Player"]);
             SetUpCameraAndLight();
+            BuildHUD(scene);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -413,6 +419,8 @@ namespace RoadSafety.EditorTools
         /// <summary>Lime-washed house with a blue arched door and blue windows (Sidi Bou Said style).</summary>
         private static void House(Transform parent, float side, float zCenter, float width, string shopSign)
         {
+            if (shopSign != null && !shopFronts.ContainsKey(shopSign))
+                shopFronts[shopSign] = new Vector2(side, zCenter);
             float depth = Rand(9f, 12f);
             bool twoFloors = Chance(0.55f);
             float height = twoFloors ? 6.6f : 3.8f;
@@ -690,6 +698,10 @@ namespace RoadSafety.EditorTools
             Transform sidePole = Group("Pole_SideEast", root, new Vector3(-6.9f, 0.2f, -4.6f));
             Cylinder("Pole", sidePole, new Vector3(0f, 1.6f, 0f), 0.09f, 3.2f, "Metal", null, false);
             side.Add(Head(sidePole, new Vector3(0f, 3.5f, 0f), Vector3.right));
+            // side road, westbound
+            Transform sidePoleWest = Group("Pole_SideWest", root, new Vector3(6.9f, 0.2f, 4.6f));
+            Cylinder("Pole", sidePoleWest, new Vector3(0f, 1.6f, 0f), 0.09f, 3.2f, "Metal", null, false);
+            side.Add(Head(sidePoleWest, new Vector3(0f, 3.5f, 0f), Vector3.left));
 
             light.Configure(main.ToArray(), side.ToArray(), M("Lamp_Off"), M("Lamp_Red"), M("Lamp_Amber"), M("Lamp_Green"));
             return light;
@@ -780,6 +792,8 @@ namespace RoadSafety.EditorTools
             southLine.gameObject.AddComponent<StopLine>().Configure(light, false, null, 2.6f);
             Transform eastLine = Group("StopLine_Lights_SideEast", rules, new Vector3(-5.6f, 0f, SideRoadZ - 2f), 90f);
             eastLine.gameObject.AddComponent<StopLine>().Configure(light, true, null, 2.2f);
+            Transform westLine = Group("StopLine_Lights_SideWest", rules, new Vector3(5.6f, 0f, SideRoadZ + 2f), -90f);
+            westLine.gameObject.AddComponent<StopLine>().Configure(light, true, null, 2.2f);
 
             // zebra crossing (US 2.2)
             Transform crossing = Group("SchoolCrossing", rules, new Vector3(0f, 0f, SchoolZ));
@@ -898,8 +912,8 @@ namespace RoadSafety.EditorTools
         private static void BuildOtherCars(Transform traffic, Dictionary<string, GameObject> models, TrafficLight light, CrosswalkRule crosswalk)
         {
             Transform cars = Group("OtherCars", traffic, Vector3.zero);
-            string[] oncomingModels = { "Taxi", "Louage", "Car_Green", "Taxi" };
-            float[] startZ = { 205f, 135f, 62f, -15f };
+            string[] oncomingModels = { "Taxi", "Louage", "Car_Green", "Taxi", "Car_Orange" };
+            float[] startZ = { 205f, 135f, 62f, -15f, 168f };
             var oncoming = new List<NpcCar>();
             for (int i = 0; i < oncomingModels.Length; i++)
             {
@@ -910,7 +924,11 @@ namespace RoadSafety.EditorTools
             }
             NpcCar cross = NpcCarFrom(cars, models["Car_Orange"], "Crossing_Car_Orange",
                 new Vector3(-30f, 0.05f, SideRoadZ - 2f), new Vector3(-68f, 0.05f, SideRoadZ - 2f), new Vector3(68f, 0.05f, SideRoadZ - 2f), false);
-            traffic.gameObject.AddComponent<TrafficDirector>().Configure(oncoming.ToArray(), new[] { cross });
+            NpcCar crossWest = NpcCarFrom(cars, models["Car_Green"], "Crossing_Car_Green",
+                new Vector3(40f, 0.05f, SideRoadZ + 2f), new Vector3(68f, 0.05f, SideRoadZ + 2f), new Vector3(-68f, 0.05f, SideRoadZ + 2f), false);
+            NpcCar crossTaxi = NpcCarFrom(cars, models["Taxi"], "Crossing_Taxi",
+                new Vector3(-62f, 0.05f, SideRoadZ - 2f), new Vector3(-68f, 0.05f, SideRoadZ - 2f), new Vector3(68f, 0.05f, SideRoadZ - 2f), false);
+            traffic.gameObject.AddComponent<TrafficDirector>().Configure(oncoming.ToArray(), new[] { cross, crossWest, crossTaxi });
         }
 
         private static NpcCar NpcCarFrom(Transform parent, GameObject model, string name, Vector3 position, Vector3 pathStart, Vector3 pathEnd, bool isLouage)

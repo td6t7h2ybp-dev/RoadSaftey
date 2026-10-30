@@ -133,6 +133,9 @@ namespace RoadSafety.UI
             ui.endScreen = EndScreen.Build(parent);
             ui.badgePopup = BadgePopup.Build(parent); // last: drawn on top of the end screen
 
+            // what the HUD shows before Play (it can be saved in the scene: RoadSafety > UI)
+            ui.levelText.text = ArabicText.Fix("المستوى 1");
+            SetVisible(ui.bubbleGroup, false);
             return hud;
         }
     }

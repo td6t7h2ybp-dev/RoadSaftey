@@ -48,6 +48,8 @@ The road runs along Z; the player drives north (+Z) in the right lane, from z = 
 | `Pedestrians` | The school kid (`Pedestrian`, behaviour tree) and the kids in the garden |
 | `Rules` | `RedLightRule` (z 22), `CrosswalkRule` (school, z 100), `BallEvent` (z 172), `FinishLine` (z 238), stop lines |
 | `Player/PlayerCar` | Rounded blue car: `CarController`, `CrashFeedback`, `ThreatSensor`, `PlayerActions` |
+| `Pedestrians/Townsfolk` | Townspeople run by `Townsperson` (behaviour tree + utility): walkers who stop to chat and rest, friends talking at the bakery / grocery / mosque, men drinking tea at the café, people on the garden bench, mothers watching the children, a bambalouni seller. They wave when the child honks and never step onto the road |
+| `UI/HUD` | The HUD saved in the scene: visible in the Game view without pressing Play (rebuild it with **RoadSafety > UI > Rebuild HUD in the scene**) |
 
 **Don't edit the generated objects by hand**: change `LevelBuilder.cs`, run the menu again and commit the scene
 **and** the files in `Materials/Generated`, `Models/Generated`, `Prefabs/Vehicles`. Only one of us rebuilds at a time.
