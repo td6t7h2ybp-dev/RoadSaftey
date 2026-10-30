@@ -29,6 +29,9 @@ namespace RoadSafety.UI
         /// <summary>true on press, false on release (handy for hold buttons).</summary>
         public event Action<bool> HeldChanged;
 
+        /// <summary>Finger lifted while still on the button (for menu buttons).</summary>
+        public event Action Clicked;
+
         public bool IsHeld => pointersDown > 0;
 
         public RectTransform Visual
@@ -53,7 +56,12 @@ namespace RoadSafety.UI
                 return;
             pointersDown--;
             if (pointersDown == 0)
+            {
                 ReleaseNow();
+                var rect = (RectTransform)transform;
+                if (RectTransformUtility.RectangleContainsScreenPoint(rect, eventData.position, eventData.pressEventCamera))
+                    Clicked?.Invoke();
+            }
         }
 
         /// <summary>Forces the button up (used when the app loses focus or the button is hidden).</summary>

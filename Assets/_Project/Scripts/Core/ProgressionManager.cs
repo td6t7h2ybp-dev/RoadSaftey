@@ -157,6 +157,7 @@ namespace RoadSafety.Core
         public void RestartLevel()
         {
             IsRestarting = true;
+            Time.timeScale = 1f;
             Scene scene = SceneManager.GetActiveScene();
             if (scene.buildIndex >= 0)
                 SceneManager.LoadScene(scene.buildIndex);

@@ -82,6 +82,38 @@ namespace RoadSafety.UI
             });
         }
 
+        /// <summary>Short happy fanfare (badge, end of level): an arpeggio going up.</summary>
+        public static AudioClip Fanfare()
+        {
+            float[] notes = { 523.3f, 659.3f, 784f, 1046.5f };
+            const float step = 0.11f;
+            return Make("Fanfare", step * notes.Length + 0.6f, t =>
+            {
+                float sum = 0f;
+                for (int i = 0; i < notes.Length; i++)
+                {
+                    float start = i * step;
+                    if (t >= start)
+                        sum += 0.22f * Bell(t - start, notes[i], i == notes.Length - 1 ? 3f : 7f);
+                }
+                return sum;
+            });
+        }
+
+        /// <summary>Soft "tick" for menu buttons.</summary>
+        public static AudioClip Click()
+        {
+            return Make("Click", 0.08f, t => 0.35f * Envelope(t, 0.08f, 0.002f, 0.06f) * Mathf.Sin(TwoPi * 1200f * t));
+        }
+
+        /// <summary>Two quick soft notes when something is in front of the car.</summary>
+        public static AudioClip Danger()
+        {
+            return Make("Danger", 0.36f, t =>
+                0.28f * (t < 0.16f ? Envelope(t, 0.16f, 0.01f, 0.05f) * Warm(t, 880f)
+                                   : Envelope(t - 0.18f, 0.16f, 0.01f, 0.05f) * Warm(t, 880f)));
+        }
+
         // ---------- helpers ----------
 
         private static AudioClip Make(string name, float seconds, Func<float, float> sample)
