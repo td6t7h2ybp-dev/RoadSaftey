@@ -24,14 +24,14 @@ Assets/
       Core/      GameManager, ProgressionManager (stars, hearts), Badges, BadgeTracker, LevelSession,
                  GameMessages (every Arabic line + its voice), AudioPrefs, MusicPlayer, DebugView
       Player/    DriverControls (all child actions), CarController, CameraFollow, CrashFeedback,
-                 ThreatSensor, PlayerActions (player behaviour tree)
+                 EngineSound, ThreatSensor, PlayerActions (player behaviour tree)
       World/     TrafficLight, StopLine, RedLightRule, CrosswalkRule, Ball, BallEvent, FinishLine, Vehicle
       UI/        HUD built in code: HUDBuilder, HUDController, SettingsMenu, BadgeMenu, BadgePopup, EndScreen, ArabicText
       Editor/    LevelBuilder (the Tunisian street), MeshFactory (rounded cars), ProjectTools, HUDPrefabMenu
     Materials/Generated  Models/Generated  Prefabs/Vehicles   <- made by the level builder, don't edit by hand
     Textures/Signs       road signs, shop signs, school / garden banners, flag
     UI/Resources/HUD     HUD sprites       UI/Resources/Fonts   Baloo Bhaijaan RS (rounded Arabic, OFL)
-    Audio/Resources/Audio  Music_Loop.wav + VO/ (16 Arabic voice lines)
+    Audio/Resources/Audio  Music_Loop.wav, Engine_Loop.wav + VO/ (16 Arabic voice lines)
   Settings/                      <- URP settings from the template (leave as is)
 ```
 
@@ -47,7 +47,7 @@ The road runs along Z; the player drives north (+Z) in the right lane, from z = 
 | `Traffic` | Traffic light (2 axes), 4 oncoming cars + 1 crossing car (`NpcCar`, behaviour tree + utility), `TrafficDirector` |
 | `Pedestrians` | The school kid (`Pedestrian`, behaviour tree) and the kids in the garden |
 | `Rules` | `RedLightRule` (z 22), `CrosswalkRule` (school, z 100), `BallEvent` (z 172), `FinishLine` (z 238), stop lines |
-| `Player/PlayerCar` | Rounded blue car: `CarController`, `CrashFeedback`, `ThreatSensor`, `PlayerActions` |
+| `Player/PlayerCar` | Rounded blue car: `CarController`, `CrashFeedback`, `ThreatSensor`, `PlayerActions`, `EngineSound` + `AudioSource` (cartoon engine, starts with the seatbelt, follows the speed and the sound-effects switch) |
 | `Pedestrians/Townsfolk` | Townspeople run by `Townsperson` (behaviour tree + utility): walkers who stop to chat and rest, friends talking at the bakery / grocery / mosque, men drinking tea at the café, people on the garden bench, mothers watching the children, a bambalouni seller. They wave when the child honks and never step onto the road |
 | `UI/HUD` | The HUD saved in the scene: visible in the Game view without pressing Play (rebuild it with **RoadSafety > UI > Rebuild HUD in the scene**) |
 
