@@ -78,6 +78,9 @@ namespace RoadSafety.UI
             ui.beltOn = LoadSprite("btn_belt_on");
             ui.belt = MakeButton("Btn_Seatbelt", parent, ui.beltOff, TopRight, new Vector2(-385f, -150f), 205f);
             ui.beltIcon = ui.belt.Visual.GetComponent<Image>();
+            // the friend sits in the car and the belt is a real one: no avatar / belt button on screen
+            ui.avatar.gameObject.SetActive(false);
+            ui.belt.gameObject.SetActive(false);
 
             // danger sign (behaviour tree "Avoid": something in front of the car)
             ui.danger = MakeRect("Danger", parent, TopRight, new Vector2(-560f, -150f), new Vector2(130f, 130f));

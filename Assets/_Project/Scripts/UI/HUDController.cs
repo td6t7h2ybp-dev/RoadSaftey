@@ -226,14 +226,27 @@ namespace RoadSafety.UI
         public void UseInCarFriend()
         {
             HudRestyle.Apply(ui); // also used by the Editor preview, which never calls Start()
-            // US 1.3 + slide 6: the seatbelt button and the avatar thumbnail (with / without belt)
-            // stay on screen, even though the friend and the real belt are now in the car too.
+            // The friend sits in the car and the seatbelt is a real one you pull (CarInterior):
+            // no 2D avatar thumbnail and no seatbelt button on the HUD.
+            HideAvatarAndBeltButton(ui);
             if (ui.bubble != null)
             {
                 Transform tail = ui.bubble.Find("Tail");
                 if (tail != null) tail.gameObject.SetActive(false);
                 // the bubble now floats next to the friend's head, with a pointer to them
                 SpeechBubbleFollow.Attach(ui.bubble);
+            }
+        }
+
+        /// <summary>Hides the 2D avatar and the seatbelt button (the friend and the belt are in the car).</summary>
+        public static void HideAvatarAndBeltButton(Refs refs)
+        {
+            if (refs == null) return;
+            if (refs.avatar != null) refs.avatar.gameObject.SetActive(false);
+            if (refs.belt != null)
+            {
+                refs.belt.ForceRelease();
+                refs.belt.gameObject.SetActive(false);
             }
         }
 
