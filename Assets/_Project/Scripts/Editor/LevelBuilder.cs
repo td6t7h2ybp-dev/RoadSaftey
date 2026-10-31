@@ -990,6 +990,7 @@ namespace RoadSafety.EditorTools
             if (car.GetComponent<CarController>() == null) car.AddComponent<CarController>();
             if (car.GetComponent<CrashFeedback>() == null) car.AddComponent<CrashFeedback>();
             if (car.GetComponent<ThreatSensor>() == null) car.AddComponent<ThreatSensor>();
+            if (car.GetComponent<EngineSound>() == null) car.AddComponent<EngineSound>();
         }
 
         private static void SetUpCameraAndLight()
