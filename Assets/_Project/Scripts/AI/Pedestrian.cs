@@ -30,7 +30,7 @@ namespace RoadSafety.AI
     /// </code>
     /// The model is made of simple parts (legs, arms) animated in code.
     /// </summary>
-    public class Pedestrian : MonoBehaviour
+    public class Pedestrian : MonoBehaviour, IBTAgent
     {
         private static readonly List<Pedestrian> registered = new List<Pedestrian>();
 
@@ -54,6 +54,13 @@ namespace RoadSafety.AI
         private CrosswalkRule rule;
         private Node root;
         private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
+        private BTBindings bindings;
+
+        /// <summary>IBTAgent: the conditions and actions the Behavior Designer tasks call by name.</summary>
+        public BTBindings Bindings => bindings ?? (root != null ? bindings = BTBindings.From(root) : null);
+
+        /// <summary>IBTAgent: the tree, as saved into the Behavior Designer component.</summary>
+        public Node DescribeTree() => BuildTree();
         private float waitTimer;
         private float stateTimer;
         private float walkPhase;
@@ -146,7 +153,7 @@ namespace RoadSafety.AI
                 return;
             stateTimer += Time.deltaTime;
             moving = false;
-            if (bdTree == null) bdTree = BDBridge.Create(this, root, "Pedestrian");
+            if (bdTree == null) bdTree = BDBridge.Ensure(this, root, "Pedestrian");
             BDBridge.Tick(bdTree); // Behavior Designer runs the tree
             Animate();
         }

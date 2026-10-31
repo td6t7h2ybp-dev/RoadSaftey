@@ -34,7 +34,7 @@ namespace RoadSafety.AI
     ///        └─ Rest a moment         (tiredness)
     /// People never step onto the road: they stay on the pavement.
     /// </summary>
-    public class Townsperson : MonoBehaviour
+    public class Townsperson : MonoBehaviour, IBTAgent
     {
         public enum Kind
         {
@@ -71,6 +71,13 @@ namespace RoadSafety.AI
 
         private Node tree;
         private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
+        private BTBindings bindings;
+
+        /// <summary>IBTAgent: the conditions and actions the Behavior Designer tasks call by name.</summary>
+        public BTBindings Bindings => bindings ?? (tree != null ? bindings = BTBindings.From(tree) : null);
+
+        /// <summary>IBTAgent: the tree, as saved into the Behavior Designer component.</summary>
+        public Node DescribeTree() => BuildTree();
         private UtilitySelector choice;
         private DriverControls controls;
 
@@ -105,9 +112,11 @@ namespace RoadSafety.AI
             talkBubble = bubble;
         }
 
-        private void Awake()
+        private void Awake() => tree = BuildTree();
+
+        private Node BuildTree()
         {
-            tree = new Selector("Townsperson",
+            return new Selector("Townsperson",
                 new Sequence("Horn heard",
                     new Condition("Car honked nearby?", () => Time.time < waveUntil),
                     new ActionNode("Wave at the car", Wave)),
@@ -150,7 +159,7 @@ namespace RoadSafety.AI
                 controls = DriverControls.Instance;
                 controls.Honked += OnHonk;
             }
-            if (bdTree == null) bdTree = BDBridge.Create(this, tree, "Townsperson");
+            if (bdTree == null) bdTree = BDBridge.Ensure(this, tree, "Townsperson");
             BDBridge.Tick(bdTree); // Behavior Designer runs the tree
             if (talkBubble != null && Mood != TownMood.Chatting && Mood != TownMood.Talking && Mood != TownMood.Seated)
                 talkBubble.SetActive(false);

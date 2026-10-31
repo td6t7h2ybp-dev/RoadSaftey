@@ -23,7 +23,7 @@ namespace RoadSafety.Player
     /// <see cref="DriverControls.Perform"/>. This tree decides which action is the right one
     /// now and gently pulses that button on the HUD, so a 5-year-old knows what to press.
     /// </summary>
-    public class PlayerActions : MonoBehaviour
+    public class PlayerActions : MonoBehaviour, IBTAgent
     {
         private const float RepairPerSecond = 10f;
         private const float StaminaRecoveryPerSecond = 15f;
@@ -51,6 +51,13 @@ namespace RoadSafety.Player
         private HUDController hud;
         private Node root;
         private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
+        private BTBindings bindings;
+
+        /// <summary>IBTAgent: the conditions and actions the Behavior Designer tasks call by name.</summary>
+        public BTBindings Bindings => bindings ?? (root != null ? bindings = BTBindings.From(root) : null);
+
+        /// <summary>IBTAgent: the tree, as saved into the Behavior Designer component.</summary>
+        public Node DescribeTree() => BuildTree();
         private UtilitySelector best;
         private float timer;
         private TouchButton hinted;
@@ -106,7 +113,7 @@ namespace RoadSafety.Player
             if (timer < tickInterval)
                 return;
             timer = 0f;
-            if (bdTree == null) bdTree = BDBridge.Create(this, root, "Player actions");
+            if (bdTree == null) bdTree = BDBridge.Ensure(this, root, "Player actions");
             BDBridge.Tick(bdTree); // Behavior Designer runs the tree
         }
 

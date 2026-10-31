@@ -18,7 +18,7 @@ namespace RoadSafety.AI
     /// Kinematic: it never pushes the player's car; the player bumps into it instead.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class NpcCar : Vehicle
+    public class NpcCar : Vehicle, IBTAgent
     {
         [SerializeField] private Vector3 pathStart;
         [SerializeField] private Vector3 pathEnd;
@@ -31,6 +31,13 @@ namespace RoadSafety.AI
         private Rigidbody body;
         private Node root;
         private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
+        private BTBindings bindings;
+
+        /// <summary>IBTAgent: the conditions and actions the Behavior Designer tasks call by name.</summary>
+        public BTBindings Bindings => bindings ?? (root != null ? bindings = BTBindings.From(root) : null);
+
+        /// <summary>IBTAgent: the tree, as saved into the Behavior Designer component.</summary>
+        public Node DescribeTree() => BuildTree();
         private UtilitySelector speedChoice;
         private float speed;
         private float targetSpeed;
@@ -87,7 +94,7 @@ namespace RoadSafety.AI
         private void FixedUpdate()
         {
             float dt = Time.fixedDeltaTime;
-            if (bdTree == null) bdTree = BDBridge.Create(this, root, "Other car");
+            if (bdTree == null) bdTree = BDBridge.Ensure(this, root, "Other car");
             BDBridge.Tick(bdTree); // Behavior Designer runs the tree
             float rate = targetSpeed < speed ? deceleration : acceleration;
             speed = Mathf.MoveTowards(speed, targetSpeed, rate * dt);

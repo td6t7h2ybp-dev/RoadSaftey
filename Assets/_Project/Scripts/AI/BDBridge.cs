@@ -6,24 +6,45 @@ using BDT = BehaviorDesigner.Runtime.Tasks;
 namespace RoadSafety.AI
 {
     /// <summary>
-    /// Runs the game's behaviour trees on Behavior Designer (Opsive).
-    /// Every AI (other cars, the school kid, the townspeople, the player's actions) describes its
-    /// tree with the small builder in BehaviorTree.cs; <see cref="Create"/> turns that description
-    /// into a real Behavior Designer <c>BehaviorTree</c> component made of Behavior Designer tasks:
-    ///   Selector   → BehaviorDesigner Selector
-    ///   Sequence   → BehaviorDesigner Sequence
-    ///   UtilitySelector (fonction utilitaire) → BehaviorDesigner UtilitySelector (GetUtility)
-    ///   Condition  → a Conditional task,  ActionNode → an Action task.
-    /// Behavior Designer executes the tree (open Tools > Behavior Designer > Editor and select the
-    /// object in Play mode to watch it run). The AI ticks its tree with <see cref="Tick"/> from its
-    /// own Update / FixedUpdate, so the timing is the same as before.
+    /// Behavior Designer (Opsive) runs every AI of the game: the other cars, the school kid, the
+    /// townspeople, the player's actions and the traffic light.
+    /// Each of them has a Behavior Designer <c>BehaviorTree</c> component saved in Main.unity
+    /// (RoadSafety > AI > Attach Behavior Designer trees). Its tasks are Behavior Designer
+    /// composites (Selector, Sequence, UtilitySelector) with RoadSafety leaves
+    /// (<see cref="AgentCondition"/>, <see cref="AgentAction"/>) that call the agent by name.
+    /// The agent ticks its own tree with <see cref="Tick"/> (Update / FixedUpdate), so the timing
+    /// stays the same; if an object has no saved tree, the same tree is built when Play starts.
     /// </summary>
     public static class BDBridge
     {
-        public static BDR.BehaviorTree Create(MonoBehaviour owner, Node root, string treeName)
+        /// <summary>The agent's Behavior Designer tree (the one saved in the scene, or a new one).</summary>
+        public static BDR.BehaviorTree Ensure(MonoBehaviour agent, Node root, string treeName)
         {
-            var bt = owner.gameObject.AddComponent<BDR.BehaviorTree>();
-            bt.StartWhenEnabled = false;
+            var bt = agent.GetComponent<BDR.BehaviorTree>();
+            if (bt == null)
+            {
+                bt = agent.gameObject.AddComponent<BDR.BehaviorTree>();
+                Fill(bt, root, treeName);
+                bt.GetBehaviorSource().HasSerialized = true; // built in code: nothing to load
+            }
+            return bt; // StartWhenEnabled: Behavior Designer starts it on its own
+        }
+
+        /// <summary>Runs one pass of the agent's Behavior Designer tree.</summary>
+        public static void Tick(BDR.BehaviorTree bt)
+        {
+            if (bt == null || !bt.isActiveAndEnabled) return;
+            BDR.BehaviorManager manager = BDR.BehaviorManager.instance;
+            if (manager == null) return;
+            if (manager.UpdateInterval != BDR.UpdateIntervalType.Manual)
+                manager.UpdateInterval = BDR.UpdateIntervalType.Manual; // each agent ticks its own tree
+            manager.Tick(bt);
+        }
+
+        /// <summary>Writes the tree into a BehaviorTree component (also used by the Editor bake).</summary>
+        public static void Fill(BDR.BehaviorTree bt, Node root, string treeName)
+        {
+            bt.StartWhenEnabled = true;
             bt.RestartWhenComplete = true;   // one full pass per tick, like a reactive tree
             bt.ResetValuesOnRestart = false;
             bt.BehaviorName = treeName;
@@ -31,35 +52,16 @@ namespace RoadSafety.AI
             nextId = 1;
             BDT.Task rootTask = Convert(root);
             Layout(rootTask, Vector2.zero);
-            // the "Entry" node Behavior Designer draws above every tree
             var entry = new BDT.EntryTask { FriendlyName = "Entry" };
             entry.ID = 0;
             entry.NodeData = new BDR.NodeData { Offset = new Vector2(0f, -140f) };
             source.EntryTask = entry;
             source.DetachedTasks = new System.Collections.Generic.List<BDT.Task>();
             source.RootTask = rootTask;
-            source.HasSerialized = true;     // built in code: nothing to deserialize
-            HideGizmos(bt);
-            bt.EnableBehavior();
-            if (BDR.BehaviorManager.instance != null)
-                BDR.BehaviorManager.instance.UpdateInterval = BDR.UpdateIntervalType.Manual; // each AI ticks its own tree
-            return bt;
-        }
-
-        /// <summary>Runs one pass of the Behavior Designer tree.</summary>
-        public static void Tick(BDR.BehaviorTree bt)
-        {
-            if (bt == null || !bt.isActiveAndEnabled || BDR.BehaviorManager.instance == null)
-                return;
-            BDR.BehaviorManager.instance.Tick(bt);
         }
 
         private static int nextId;
 
-        /// <summary>
-        /// Trees built in code have no editor data: give every task an ID and a position so the
-        /// Behavior Designer window draws the tree (children spread under their parent).
-        /// </summary>
         private static void Layout(BDT.Task task, Vector2 offset)
         {
             task.ID = nextId++;
@@ -72,107 +74,37 @@ namespace RoadSafety.AI
             }
         }
 
-        /// <summary>Behavior Designer's scene-view icon is not needed for code-built trees.</summary>
-        private static void HideGizmos(BDR.BehaviorTree bt)
-        {
-            const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
-            for (Type t = bt.GetType(); t != null; t = t.BaseType)
-            {
-                var mode = t.GetField("gizmoViewMode", all);
-                if (mode != null && mode.FieldType.IsEnum)
-                    mode.SetValue(bt, Enum.Parse(mode.FieldType, "Never"));
-                var show = t.GetField("showBehaviorDesignerGizmo", all);
-                if (show != null && show.FieldType == typeof(bool))
-                    show.SetValue(bt, false);
-            }
-        }
-
         private static BDT.Task Convert(Node node)
         {
             switch (node)
             {
                 case Selector selector:
                 {
-                    var task = new BDT.Selector();
-                    task.FriendlyName = selector.Name;
+                    var task = new BDT.Selector { FriendlyName = selector.Name };
                     for (int i = 0; i < selector.Children.Count; i++)
                         task.AddChild(Convert(selector.Children[i]), i);
                     return task;
                 }
                 case Sequence sequence:
                 {
-                    var task = new BDT.Sequence();
-                    task.FriendlyName = sequence.Name;
+                    var task = new BDT.Sequence { FriendlyName = sequence.Name };
                     for (int i = 0; i < sequence.Children.Count; i++)
                         task.AddChild(Convert(sequence.Children[i]), i);
                     return task;
                 }
                 case UtilitySelector utility:
                 {
-                    var task = new BDT.UtilitySelector();
-                    task.FriendlyName = utility.Name;
+                    // fonction utilitaire: Behavior Designer picks the child with the highest GetUtility()
+                    var task = new BDT.UtilitySelector { FriendlyName = utility.Name };
                     for (int i = 0; i < utility.Options.Count; i++)
-                    {
-                        UtilityOption option = utility.Options[i];
-                        var branch = new UtilityBranch { Score = option.Score, UtilityOwner = utility, Chosen = option.Node };
-                        branch.FriendlyName = option.Node.Name;
-                        branch.AddChild(Convert(option.Node), 0);
-                        task.AddChild(branch, i);
-                    }
+                        task.AddChild(Convert(utility.Options[i].Node), i);
                     return task;
                 }
                 case Condition condition:
-                    return new LambdaConditional { Check = condition.Check, FriendlyName = condition.Name };
-                case ActionNode action:
-                    return new LambdaAction { Run = action.Run, FriendlyName = action.Name };
+                    return new AgentCondition { conditionName = condition.Name, FriendlyName = condition.Name };
                 default:
-                    return new LambdaAction { Run = node.Evaluate, FriendlyName = node.Name };
+                    return new AgentAction { actionName = node.Name, FriendlyName = node.Name };
             }
-        }
-
-        private static BDT.TaskStatus ToStatus(NodeState state) =>
-            // one pass per tick: a "running" action has done this frame's work, so the pass succeeds
-            state == NodeState.Failure ? BDT.TaskStatus.Failure : BDT.TaskStatus.Success;
-
-        /// <summary>A Behavior Designer conditional task that asks the AI a yes / no question.</summary>
-        public class LambdaConditional : BDT.Conditional
-        {
-            public Func<bool> Check;
-
-            public override BDT.TaskStatus OnUpdate() =>
-                Check != null && Check() ? BDT.TaskStatus.Success : BDT.TaskStatus.Failure;
-        }
-
-        /// <summary>A Behavior Designer action task that runs one frame of an AI action.</summary>
-        public class LambdaAction : BDT.Action
-        {
-            public Func<NodeState> Run;
-
-            public override BDT.TaskStatus OnUpdate() =>
-                Run != null ? ToStatus(Run()) : BDT.TaskStatus.Failure;
-        }
-
-        /// <summary>
-        /// One branch of a utility selector: gives Behavior Designer the branch's utility score
-        /// (GetUtility) and runs the branch.
-        /// </summary>
-        public class UtilityBranch : BDT.Decorator
-        {
-            public Func<float> Score;
-            public UtilitySelector UtilityOwner;
-            public Node Chosen;
-            private BDT.TaskStatus executionStatus = BDT.TaskStatus.Inactive;
-
-            public override float GetUtility() => Score != null ? Score() : 0f;
-
-            public override void OnStart() => UtilityOwner?.Report(Chosen, GetUtility());
-
-            public override bool CanExecute() =>
-                executionStatus == BDT.TaskStatus.Inactive || executionStatus == BDT.TaskStatus.Running;
-
-            public override void OnChildExecuted(BDT.TaskStatus childStatus) => executionStatus = childStatus;
-
-            public override void OnEnd() => executionStatus = BDT.TaskStatus.Inactive;
         }
     }
 }

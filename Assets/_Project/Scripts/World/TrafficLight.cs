@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using RoadSafety.AI;
 using RoadSafety.Core;
 
 namespace RoadSafety.World
@@ -17,8 +18,18 @@ namespace RoadSafety.World
     /// main green → main amber → all red → side green → side amber → all red → ...
     /// When the child comes near, <see cref="SkipToAmber"/> is called so the child always
     /// meets a red light and can practise stopping.
+    /// The cycle is run by a Behavior Designer tree (one branch per phase):
+    /// <code>
+    /// Selector "Traffic light"
+    /// ├─ Sequence "Main road green" : Main road's turn?   → Keep main green, then amber
+    /// ├─ Sequence "Main road amber" : Main road ending?   → Keep main amber (orange), then red
+    /// ├─ Sequence "All red (1)"     : Clearing the crossing? → Keep all red, then side green
+    /// ├─ Sequence "Side road green" : Side road's turn?   → Keep side green, then amber
+    /// ├─ Sequence "Side road amber" : Side road ending?   → Keep side amber (orange), then red
+    /// └─ Sequence "All red (2)"     : Clearing the crossing again? → Keep all red, then main green
+    /// </code>
     /// </summary>
-    public class TrafficLight : MonoBehaviour
+    public class TrafficLight : MonoBehaviour, IBTAgent
     {
         [Serializable]
         public class LampSet
@@ -44,6 +55,41 @@ namespace RoadSafety.World
 
         private int phase;
         private float timer;
+        private Node root;
+        private BTBindings bindings;
+        private BehaviorDesigner.Runtime.BehaviorTree bdTree;
+        private Material orange;
+
+        /// <summary>IBTAgent: the conditions and actions the Behavior Designer tasks call by name.</summary>
+        public BTBindings Bindings => bindings ?? (root != null ? bindings = BTBindings.From(root) : null);
+
+        /// <summary>IBTAgent: the light's tree, as saved into the Behavior Designer component.</summary>
+        public Node DescribeTree() => BuildTree();
+
+        private Node BuildTree() => new Selector("Traffic light",
+            Phase("Main road green", "Main road's turn?", "Keep main green, then amber", 0),
+            Phase("Main road amber", "Main road ending?", "Keep main amber (orange), then red", 1),
+            Phase("All red (1)", "Clearing the crossing?", "Keep all red, then side green", 2),
+            Phase("Side road green", "Side road's turn?", "Keep side green, then amber", 3),
+            Phase("Side road amber", "Side road ending?", "Keep side amber (orange), then red", 4),
+            Phase("All red (2)", "Clearing the crossing again?", "Keep all red, then main green", 5));
+
+        private Node Phase(string name, string question, string action, int p) =>
+            new Sequence(name,
+                new Condition(question, () => phase == p),
+                new ActionNode(action, () => Hold(p)));
+
+        /// <summary>Keeps the current colours; when the time is up, moves to the next phase.</summary>
+        private NodeState Hold(int p)
+        {
+            timer += Time.deltaTime;
+            if (timer >= Duration(p))
+            {
+                SetPhase((p + 1) % 6);
+                return NodeState.Success;
+            }
+            return NodeState.Running;
+        }
 
         public LightColor Main { get; private set; } = LightColor.Green;
         public LightColor Side { get; private set; } = LightColor.Red;
@@ -59,6 +105,20 @@ namespace RoadSafety.World
             redMaterial = red;
             amberMaterial = amber;
             greenMaterial = green;
+        }
+
+        private void Awake()
+        {
+            root = BuildTree();
+            // a clear orange (the old amber looked yellow-red next to the golden light)
+            if (amberMaterial != null)
+            {
+                orange = new Material(amberMaterial) { name = "M_Lamp_Orange (runtime)" };
+                Color baseOrange = new Color(1f, 0.5f, 0.02f);
+                if (orange.HasProperty("_BaseColor")) orange.SetColor("_BaseColor", baseOrange);
+                if (orange.HasProperty("_EmissionColor")) orange.SetColor("_EmissionColor", new Color(1f, 0.42f, 0f) * 4f);
+                orange.EnableKeyword("_EMISSION");
+            }
         }
 
         private void Start() => SetPhase(0);
@@ -98,9 +158,9 @@ namespace RoadSafety.World
             switch (p)
             {
                 case 0: d = mainGreenTime; break;
-                case 1: d = amberTime; break;
+                case 1: d = Mathf.Max(amberTime, 3f); break;
                 case 3: d = sideGreenTime; break;
-                case 4: d = amberTime; break;
+                case 4: d = Mathf.Max(amberTime, 3f); break;
                 default: d = allRedTime; break;
             }
             return d * LevelSession.LightTimeScale;
@@ -108,9 +168,8 @@ namespace RoadSafety.World
 
         private void Update()
         {
-            timer += Time.deltaTime;
-            if (timer >= Duration(phase))
-                SetPhase((phase + 1) % 6);
+            if (bdTree == null) bdTree = BDBridge.Ensure(this, root, "Traffic light");
+            BDBridge.Tick(bdTree); // Behavior Designer runs the cycle
         }
 
         private void SetPhase(int p)
@@ -135,7 +194,7 @@ namespace RoadSafety.World
                 if (head == null)
                     continue;
                 Set(head.red, color == LightColor.Red ? redMaterial : offMaterial);
-                Set(head.amber, color == LightColor.Amber ? amberMaterial : offMaterial);
+                Set(head.amber, color == LightColor.Amber ? (orange != null ? orange : amberMaterial) : offMaterial);
                 Set(head.green, color == LightColor.Green ? greenMaterial : offMaterial);
             }
         }
