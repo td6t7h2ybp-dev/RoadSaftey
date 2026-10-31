@@ -225,6 +225,7 @@ namespace RoadSafety.UI
         /// </summary>
         public void UseInCarFriend()
         {
+            HudRestyle.Apply(ui); // also used by the Editor preview, which never calls Start()
             // US 1.3 + slide 6: the seatbelt button and the avatar thumbnail (with / without belt)
             // stay on screen, even though the friend and the real belt are now in the car too.
             if (ui.bubble != null)
