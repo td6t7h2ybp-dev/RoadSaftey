@@ -127,6 +127,7 @@ namespace RoadSafety.UI
 
             EnsureEventSystem();
             LoadSounds();
+            HudRestyle.Apply(ui); // 3D buttons in the charte colours, whatever built the HUD
 
             ui.go.HeldChanged += controls.SetAccelerate;
             ui.stop.HeldChanged += controls.SetBrake;
@@ -224,13 +225,8 @@ namespace RoadSafety.UI
         /// </summary>
         public void UseInCarFriend()
         {
-            HudRestyle.Apply(ui); // look of the reference: dark glass buttons, white icons, pedals
-            if (ui.avatar != null) ui.avatar.gameObject.SetActive(false);
-            if (ui.belt != null)
-            {
-                ui.belt.ForceRelease();
-                ui.belt.gameObject.SetActive(false);
-            }
+            // US 1.3 + slide 6: the seatbelt button and the avatar thumbnail (with / without belt)
+            // stay on screen, even though the friend and the real belt are now in the car too.
             if (ui.bubble != null)
             {
                 Transform tail = ui.bubble.Find("Tail");

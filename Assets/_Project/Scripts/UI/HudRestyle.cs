@@ -16,10 +16,10 @@ namespace RoadSafety.UI
         private const int Size = 256;
         public static readonly Color Ink = new Color32(30, 27, 46, 255);       // outlines and text
         private static readonly Color Paper = new Color32(255, 252, 245, 255);  // icons, bubble
-        private static readonly Color Red = new Color32(232, 72, 64, 255);
-        private static readonly Color Green = new Color32(76, 186, 92, 255);
-        private static readonly Color Yellow = new Color32(255, 196, 46, 255);
-        private static readonly Color Blue = new Color32(58, 134, 230, 255);
+        private static readonly Color Red = new Color32(236, 86, 76, 255);      // Stop: red, softened
+        private static readonly Color Green = new Color32(126, 204, 72, 255);   // vert pomme
+        private static readonly Color Yellow = new Color32(255, 206, 60, 255);  // jaune soleil
+        private static readonly Color Blue = new Color32(92, 184, 240, 255);    // bleu ciel
         private static readonly Color Orange = new Color32(255, 128, 56, 255);
 
         private const float InkWidth = 0.06f;  // ink line width (in -1..1 units)
@@ -27,11 +27,11 @@ namespace RoadSafety.UI
 
         public static void Apply(HUDController.Refs ui)
         {
-            Set(ui.left, Round((x, y) => Arrow(-x, y), Orange));
-            Set(ui.right, Round((x, y) => Arrow(x, y), Orange));
+            Set(ui.left, Round((x, y) => Arrow(-x, y), Blue));
+            Set(ui.right, Round((x, y) => Arrow(x, y), Blue));
             Set(ui.horn, Round(Horn, Yellow));
             Set(ui.settingsButton, Round(Gear, Blue));
-            Set(ui.badgesButton, Round(StarGlyph, Yellow));
+            Set(ui.badgesButton, Round(StarGlyph, Green));
             Set(ui.go, GoPedal());
             Set(ui.stop, StopSign());
 

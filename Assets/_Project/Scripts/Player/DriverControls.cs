@@ -19,6 +19,17 @@ namespace RoadSafety.Player
     /// One DriverControls is added automatically to every scene that has a GameManager
     /// (see GameplayBootstrap), so read it in Start/Update, not in Awake.
     /// </summary>
+    /// <summary>Everything the child can do (at most 3 at once, e.g. Go + steer + horn).</summary>
+    public enum PlayerAction
+    {
+        Accelerate,
+        Brake,
+        SteerLeft,
+        SteerRight,
+        Seatbelt,
+        Horn
+    }
+
     [DefaultExecutionOrder(-50)]
     public class DriverControls : MonoBehaviour
     {
@@ -114,8 +125,51 @@ namespace RoadSafety.Player
 
         // ---------- Actions (called by the HUD buttons) ----------
 
+        /// <summary>
+        /// The single, centralised entry point for every player action (US 4.3: "les actions du
+        /// joueur passent par une fonction utilitaire centralisée"). The HUD buttons, the keyboard
+        /// and the in-car seatbelt all end up here; PlayerActions (behaviour tree + utility scores)
+        /// decides which of these actions is the right one right now and hints it on the HUD.
+        /// </summary>
+        public void Perform(PlayerAction action, bool held = true)
+        {
+            LastAction = action;
+            switch (action)
+            {
+                case PlayerAction.Accelerate: DoAccelerate(held); break;
+                case PlayerAction.Brake: brakeHeld = held; break;
+                case PlayerAction.SteerLeft: leftHeld = held; break;
+                case PlayerAction.SteerRight: rightHeld = held; break;
+                case PlayerAction.Seatbelt: if (held) DoFastenSeatbelt(); break;
+                case PlayerAction.Horn: if (held) DoHonk(); break;
+            }
+            ActionPerformed?.Invoke(action, held);
+        }
+
+        /// <summary>The last action that went through <see cref="Perform"/>.</summary>
+        public PlayerAction LastAction { get; private set; }
+
+        public event Action<PlayerAction, bool> ActionPerformed;
+
         /// <summary>Go button pressed (true) or released (false).</summary>
-        public void SetAccelerate(bool held)
+        public void SetAccelerate(bool held) => Perform(PlayerAction.Accelerate, held);
+
+        /// <summary>Stop button pressed (true) or released (false).</summary>
+        public void SetBrake(bool held) => Perform(PlayerAction.Brake, held);
+
+        /// <summary>Left arrow pressed (true) or released (false).</summary>
+        public void SetSteerLeft(bool held) => Perform(PlayerAction.SteerLeft, held);
+
+        /// <summary>Right arrow pressed (true) or released (false).</summary>
+        public void SetSteerRight(bool held) => Perform(PlayerAction.SteerRight, held);
+
+        /// <summary>Seatbelt button: fastens the belt, gives the seatbelt star (once per level).</summary>
+        public void FastenSeatbelt() => Perform(PlayerAction.Seatbelt);
+
+        /// <summary>Horn button: a short, friendly honk. Never hurts anyone (US 1.4).</summary>
+        public void Honk() => Perform(PlayerAction.Horn);
+
+        private void DoAccelerate(bool held)
         {
             bool pressedNow = held && !AccelerateHeld;
             accelerateHeld = held;
@@ -123,17 +177,7 @@ namespace RoadSafety.Player
                 OnAcceleratePressed();
         }
 
-        /// <summary>Stop button pressed (true) or released (false).</summary>
-        public void SetBrake(bool held) => brakeHeld = held;
-
-        /// <summary>Left arrow pressed (true) or released (false).</summary>
-        public void SetSteerLeft(bool held) => leftHeld = held;
-
-        /// <summary>Right arrow pressed (true) or released (false).</summary>
-        public void SetSteerRight(bool held) => rightHeld = held;
-
-        /// <summary>Seatbelt button: fastens the belt, gives the seatbelt star (once per level).</summary>
-        public void FastenSeatbelt()
+        private void DoFastenSeatbelt()
         {
             if (SeatbeltOn || IsLocked)
                 return;
@@ -143,8 +187,7 @@ namespace RoadSafety.Player
                 ProgressionManager.Instance.AddStarOnce("seatbelt", GoodAction.Seatbelt);
         }
 
-        /// <summary>Horn button: a short, friendly honk. Never hurts anyone (US 1.4).</summary>
-        public void Honk()
+        private void DoHonk()
         {
             if (Time.unscaledTime - lastHornTime < hornCooldown)
                 return;
@@ -206,8 +249,8 @@ namespace RoadSafety.Player
             keyLeft = Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A);
             keyRight = Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D);
 
-            if (Input.GetKeyDown(KeyCode.B)) FastenSeatbelt();
-            if (Input.GetKeyDown(KeyCode.K)) Honk();
+            if (Input.GetKeyDown(KeyCode.B)) Perform(PlayerAction.Seatbelt);
+            if (Input.GetKeyDown(KeyCode.K)) Perform(PlayerAction.Horn);
             if (Input.GetKeyDown(KeyCode.F1)) DebugView.Toggle();
 #endif
         }
