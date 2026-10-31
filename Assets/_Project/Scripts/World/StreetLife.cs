@@ -6,9 +6,7 @@ namespace RoadSafety.World
 {
     /// <summary>
     /// Life in the street, every creature run by its own Behavior Designer tree:
-    ///   - pigeon flocks on the pavements (<see cref="PigeonFlock"/>);
     ///   - seagulls over the street (<see cref="Gull"/>);
-    ///   - stray cats along the walls (<see cref="StreetCat"/>);
     ///   - palm leaves moving in the breeze (<see cref="PalmSway"/>).
     /// RoadSafety > Level > Add street life saves all of it in Main.unity (with their trees); if the
     /// scene has none, <see cref="Apply"/> builds it when Play starts. Nothing touches the road rules.
@@ -40,24 +38,6 @@ namespace RoadSafety.World
 
             var rng = new System.Random(7);
 
-            // pigeons: pavements at |x| 6..9, away from the side road (z 23..37)
-            Transform pigeons = Group("Pigeons", root);
-            float[] zs = { -50f, -20f, 8f, 52f, 78f, 118f, 140f, 165f, 196f, 222f };
-            for (int i = 0; i < zs.Length; i++)
-            {
-                float side = i % 2 == 0 ? -1f : 1f;
-                Transform flock = Group("PigeonFlock_" + (i + 1), pigeons);
-                flock.position = new Vector3(side * (6.2f + (float)rng.NextDouble() * 2.5f), 0.2f, zs[i]);
-                int n = 4 + rng.Next(4);
-                for (int k = 0; k < n; k++)
-                {
-                    Transform bird = Bird(flock, k % 3 == 0 ? dark : grey, beak, 0.32f);
-                    bird.localPosition = new Vector3((float)rng.NextDouble() * 2.8f - 1.4f, 0f, (float)rng.NextDouble() * 2.8f - 1.4f);
-                    bird.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                }
-                flock.gameObject.AddComponent<PigeonFlock>();
-            }
-
             // seagulls circling over the street (the town is by the sea)
             Transform gulls = Group("Seagulls", root);
             for (int i = 0; i < 6; i++)
@@ -70,23 +50,6 @@ namespace RoadSafety.World
                 gull.speed = 0.25f + (float)rng.NextDouble() * 0.2f;
                 gull.phase = (float)rng.NextDouble() * 6.28f;
                 g.position = gull.centre + new Vector3(gull.radius, 0f, 0f);
-            }
-
-            // stray cats along the walls
-            Transform cats = Group("Cats", root);
-            var catRoutes = new (float side, float a, float b)[]
-            {
-                (-1f, -40f, -5f), (1f, 45f, 80f), (-1f, 110f, 150f), (1f, 160f, 200f), (-1f, 200f, 228f),
-            };
-            Material[] furs = { ginger, tabby, black, ginger, tabby };
-            for (int i = 0; i < catRoutes.Length; i++)
-            {
-                var r = catRoutes[i];
-                Transform cat = Cat(cats, "Cat_" + (i + 1), furs[i], pink);
-                var c = cat.gameObject.AddComponent<StreetCat>();
-                c.pathA = new Vector3(r.side * 9.6f, 0.2f, r.a);
-                c.pathB = new Vector3(r.side * 9.6f, 0.2f, r.b);
-                cat.position = Vector3.Lerp(c.pathA, c.pathB, (float)rng.NextDouble());
             }
 
             // palms sway

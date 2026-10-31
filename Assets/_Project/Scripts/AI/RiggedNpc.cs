@@ -1,34 +1,38 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
-using RoadSafety.Core;
 
 namespace RoadSafety.AI
 {
     /// <summary>
-    /// Gives every NPC (townspeople, the school kid, the kids in the garden) the same real rigged
-    /// character as the friend in the car (Resources/Models/rs_boy_rigged), instead of capsules.
+    /// Gives every NPC (townspeople, cafe visitors, the school kid, the kids in the garden) the same
+    /// rigged character as the friend in the car, instead of the primitive capsules.
     ///
-    /// Nothing in the AI changes: Townsperson and Pedestrian keep animating their invisible
-    /// primitive limbs (Leg_L, Arm_R, Upper...) in Update; in LateUpdate this component reads those
-    /// limbs and aims the matching bones of the rigged body the same way (walk, wave, sit, sip tea,
-    /// nod, step back...). The primitive renderers are only hidden, so if the model is missing the
-    /// old look comes back on its own.
-    ///
-    /// Each person gets their own clothes (colour from their old outfit, sometimes stripes like the
-    /// friend's T-shirt) and their own height, so the street is full of different people.
+    /// The rigged body is saved in Main.unity as a child called "Body_Rigged" (RoadSafety > AI >
+    /// Bake rigged people into the scene). The primitive capsules are switched off in the scene
+    /// file too, so the scene looks right in the Editor, when Play starts and when Play stops.
+    /// At runtime this component only poses the saved body from the AI's primitive limbs
+    /// (walk, wave, sit, sip tea, nod...). If a body was never baked, it is built when Play starts.
     /// </summary>
     [DisallowMultipleComponent]
     public class RiggedNpc : MonoBehaviour
     {
-        private const string ModelPath = "Models/rs_boy_rigged";
+        public const string ModelPath = "Models/rs_boy_rigged";
+        public const string BodyName = "Body_Rigged";
         private const float PoseDistance = 70f;   // closer than this: posed every frame
         private const float HideDistance = 140f;  // further than this: not drawn at all
 
+        /// <summary>Editor bake only: saves a material as an asset and returns it.</summary>
+        public static Func<Material, string, Material> BakeSave;
+
+        /// <summary>Editor bake only: returns the saved stripes texture asset.</summary>
+        public static Func<Texture2D> BakeStripes;
+
         private static Texture2D stripes;
 
-        // the NPC whose primitive rig the AI animates (itself in Play mode, its parent in the Editor preview)
+        // the NPC whose primitive rig the AI animates (this object)
         private Transform src;
 
         // the primitive rig the AI animates
@@ -47,56 +51,55 @@ namespace RoadSafety.AI
         private bool visible = true;
         private float phase;
 
-        // ------------------------------------------------------------------ setup
+        // ------------------------------------------------------------------ setup (Play)
 
-        /// <summary>Dresses every NPC of the loaded scene. Safe to call twice.</summary>
+        /// <summary>Height of a person in metres, from their name (the same in Play and in the bake).</summary>
+        public static float HeightFor(GameObject go)
+        {
+            if (go.name == "SchoolKid") return 1.32f;
+            if (go.name.StartsWith("PlayingKid_")) return 1.26f + Hash01(go.name) * 0.12f;
+            return 1.62f + Hash01(go.name) * 0.2f;
+        }
+
+        /// <summary>Play mode: dresses every NPC that has no baked body yet.</summary>
         public static void DressAll()
         {
-            if (Resources.Load<GameObject>(ModelPath) == null)
+            if (!Application.isPlaying || Resources.Load<GameObject>(ModelPath) == null)
                 return;
-            foreach (Townsperson t in Object.FindObjectsByType<Townsperson>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                Dress(t.gameObject, AdultHeight(t.name));
-            foreach (Pedestrian p in Object.FindObjectsByType<Pedestrian>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                Dress(p.gameObject, 1.32f);
+            foreach (Townsperson t in FindObjectsByType<Townsperson>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                Dress(t.gameObject);
+            foreach (Pedestrian p in FindObjectsByType<Pedestrian>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                Dress(p.gameObject);
+            foreach (CafeVisitor v in FindObjectsByType<CafeVisitor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                Dress(v.gameObject);
             foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
                     if (t.name.StartsWith("PlayingKid_"))
-                        Dress(t.gameObject, 1.26f + Hash01(t.name) * 0.12f);
+                        Dress(t.gameObject);
         }
 
-        private static float AdultHeight(string name) => 1.62f + Hash01(name) * 0.2f;
-
-        private static float Hash01(string s)
+        private static void Dress(GameObject go)
         {
-            unchecked
-            {
-                uint h = 2166136261;
-                foreach (char c in s) h = (h ^ c) * 16777619;
-                return (h % 1000) / 1000f;
-            }
-        }
-
-        private static void Dress(GameObject go, float height)
-        {
-            if (go.GetComponentInChildren<RiggedNpc>(true) != null)
+            if (go.GetComponent<RiggedNpc>() != null)
                 return;
-            RiggedNpc npc;
-            if (Application.isPlaying)
-                npc = go.AddComponent<RiggedNpc>();
-            else
-            {
-                // Editor preview (ScenePreview): never add anything to the NPC itself, so Main.unity
-                // does not change. A new child holds the body; the preview deletes it before saving / Play.
-                var holder = new GameObject("RiggedPreview");
-                holder.transform.SetParent(go.transform, false);
-                npc = holder.AddComponent<RiggedNpc>();
-            }
+            var npc = go.AddComponent<RiggedNpc>();
             npc.src = go.transform;
-            if (!npc.Build(height))
-                EditorPreviewLog.Kill(Application.isPlaying ? (Object)npc : npc.gameObject);
+            if (!npc.Build(HeightFor(go), false))
+                Destroy(npc);
         }
 
-        private bool Build(float height)
+        /// <summary>Editor bake: builds and saves this NPC's rigged body into the scene.</summary>
+        public bool BakeInto(float height)
+        {
+            src = transform;
+            return Build(height, true);
+        }
+
+        /// <summary>
+        /// Sets up the body and the bones. bake = true builds the saved body (no pose, no play-time
+        /// changes); bake = false uses the saved body, or builds one if the scene has none.
+        /// </summary>
+        public bool Build(float height, bool bake)
         {
             if (src == null) src = transform;
             legL = src.Find("Leg_L");
@@ -109,59 +112,82 @@ namespace RoadSafety.AI
             seated = legL.Find("Thigh") != null;
             if (upper != null) upperRest = upper.localPosition;
 
-            Color top = ColourOf("Body", "Smock", new Color(0.3f, 0.5f, 0.7f));
-            Color bottom = ColourOf("Leg", "Thigh", new Color(0.25f, 0.25f, 0.3f));
-
-            var prefab = Resources.Load<GameObject>(ModelPath);
-            GameObject body = Instantiate(prefab, transform, false);
-            body.name = "Body_Rigged";
-            model = body.transform;
-            if (!FindBones())
+            Transform existing = src.Find(BodyName);
+            bool baked = existing != null;
+            GameObject body;
+            if (baked)
             {
-                EditorPreviewLog.Kill(body);
-                return false;
-            }
-
-            // hide the capsules (not the speech bubble)
-            foreach (Renderer r in src.GetComponentsInChildren<Renderer>(true))
-                if (!r.transform.IsChildOf(model) && !InBubble(r.transform))
-                    EditorPreviewLog.SetEnabled(r, false); // remembered, so the preview can undo it
-
-            Clothe(body, top, bottom);
-
-            // height: feet to the top of the head
-            float feet = Mathf.Min(lFoot.position.y, rFoot.position.y);
-            float modelHeight = Mathf.Max(0.1f, (head.position.y - feet) * 1.12f);
-            model.localScale *= height / modelHeight;
-
-            // face the NPC's forward
-            Vector3 across = rThigh.position - lThigh.position;
-            Vector3 facing = Vector3.Cross(across, Vector3.up).normalized;
-            if (facing.sqrMagnitude > 0.01f)
-                model.rotation = Quaternion.FromToRotation(facing, transform.forward) * model.rotation;
-
-            // place: standing → feet on the ground; seated → hips on the chair
-            if (seated)
-            {
-                Vector3 seat = transform.TransformPoint(0f, legL.localPosition.y, -0.05f);
-                model.position += seat - hip.position;
+                body = existing.gameObject;
             }
             else
             {
-                feet = Mathf.Min(lFoot.position.y, rFoot.position.y);
-                Vector3 shift = transform.position - hip.position;
-                shift.y = transform.position.y - feet;
-                model.position += shift;
+                var prefab = Resources.Load<GameObject>(ModelPath);
+                if (prefab == null)
+                    return false;
+                body = Instantiate(prefab, transform, false);
+                body.name = BodyName;
+            }
+            model = body.transform;
+            if (!FindBones())
+            {
+                if (!baked) Destroy(body);
+                return false;
             }
 
+            if (!baked)
+            {
+                // hide the capsules (not the speech bubble): saved in the scene when baking
+                foreach (Renderer r in src.GetComponentsInChildren<Renderer>(true))
+                    if (!r.transform.IsChildOf(model) && !InBubble(r.transform))
+                        r.enabled = false;
+
+                Clothe(body, bake);
+
+                // height: feet to the top of the head
+                float feet = Mathf.Min(lFoot.position.y, rFoot.position.y);
+                float modelHeight = Mathf.Max(0.1f, (head.position.y - feet) * 1.12f);
+                model.localScale *= height / modelHeight;
+
+                // face the NPC's forward
+                Vector3 across = rThigh.position - lThigh.position;
+                Vector3 facing = Vector3.Cross(across, Vector3.up).normalized;
+                if (facing.sqrMagnitude > 0.01f)
+                    model.rotation = Quaternion.FromToRotation(facing, transform.forward) * model.rotation;
+
+                // place: seated → hips on the chair; standing → feet on the ground
+                if (seated)
+                {
+                    Vector3 seat = transform.TransformPoint(0f, legL.localPosition.y, -0.05f);
+                    model.position += seat - hip.position;
+                }
+                else
+                {
+                    feet = Mathf.Min(lFoot.position.y, rFoot.position.y);
+                    Vector3 shift = transform.position - hip.position;
+                    shift.y = transform.position.y - feet;
+                    model.position += shift;
+                }
+            }
+
+            bodyRenderers = model.GetComponentsInChildren<Renderer>(true);
             posed = new[] { spine, head, lThigh, lCalf, rThigh, rCalf, lUpper, lFore, rUpper, rFore };
             posedRest = new Quaternion[posed.Length];
             for (int i = 0; i < posed.Length; i++)
                 if (posed[i] != null) posedRest[i] = posed[i].localRotation;
             hipRest = hip.localPosition;
             phase = Hash01(src.name) * 10f;
-            Pose();
+            if (!bake) Pose();
             return true;
+        }
+
+        private static float Hash01(string s)
+        {
+            unchecked
+            {
+                uint h = 2166136261;
+                foreach (char c in s) h = (h ^ c) * 16777619;
+                return (h % 1000) / 1000f;
+            }
         }
 
         private bool InBubble(Transform t)
@@ -183,10 +209,14 @@ namespace RoadSafety.AI
             return fallback;
         }
 
-        private void Clothe(GameObject body, Color top, Color bottom)
+        private void Clothe(GameObject body, bool bake)
         {
+            Color top = ColourOf("Body", "Smock", new Color(0.3f, 0.5f, 0.7f));
+            Color bottom = ColourOf("Leg", "Thigh", new Color(0.25f, 0.25f, 0.3f));
             bool striped = Hash01(src.name + "s") < 0.3f;
-            var list = new List<Renderer>();
+            Texture tex = striped ? (bake && BakeStripes != null ? BakeStripes() : Stripes()) : Texture2D.whiteTexture;
+            int counter = 0;
+
             foreach (Renderer r in body.GetComponentsInChildren<Renderer>(true))
             {
                 string n = r.name.ToLowerInvariant();
@@ -204,16 +234,16 @@ namespace RoadSafety.AI
                     for (int i = 0; i < mats.Length; i++)
                     {
                         if (mats[i] == null) continue;
-                        mats[i] = new Material(mats[i]);
+                        Material m = new Material(mats[i]);
                         Color c = isTop ? top : Color.Lerp(bottom, Color.white, 0.15f);
                         foreach (string p in new[] { "baseColorFactor", "_BaseColor", "_Color" })
-                            if (mats[i].HasProperty(p)) mats[i].SetColor(p, c);
+                            if (m.HasProperty(p)) m.SetColor(p, c);
                         if (isTop)
-                        {
-                            Texture tex = striped ? Stripes() : Texture2D.whiteTexture;
                             foreach (string p in new[] { "baseColorTexture", "_BaseMap", "_MainTex" })
-                                if (mats[i].HasProperty(p)) mats[i].SetTexture(p, tex);
-                        }
+                                if (m.HasProperty(p)) m.SetTexture(p, tex);
+                        if (bake && BakeSave != null)
+                            m = BakeSave(m, src.name + "_" + (counter++));
+                        mats[i] = m;
                     }
                     r.sharedMaterials = mats;
                 }
@@ -223,9 +253,7 @@ namespace RoadSafety.AI
                     smr.quality = SkinQuality.Bone2; // lighter skinning: there are dozens of people
                 }
                 r.shadowCastingMode = ShadowCastingMode.On;
-                list.Add(r);
             }
-            bodyRenderers = list.ToArray();
         }
 
         private static Texture2D Stripes()
@@ -259,7 +287,7 @@ namespace RoadSafety.AI
                    && lFoot != null && rFoot != null;
         }
 
-        // ------------------------------------------------------------------ posing
+        // ------------------------------------------------------------------ posing (Play)
 
         private void LateUpdate()
         {
@@ -285,11 +313,11 @@ namespace RoadSafety.AI
             Vector3 up = transform.up, fwd = transform.forward;
             float t = Time.time + phase;
 
-            // the body bob / little jump of the old rig
+            // the body follows the AI's little jumps (the primitive upper body moves)
             if (upper != null)
                 hip.position += transform.TransformVector(upper.localPosition - upperRest);
 
-            // upper body: nods, gestures; plus a breath so nobody stands frozen
+            // upper body: a breath so nobody stands frozen
             if (spine != null)
             {
                 Quaternion lean = upper != null ? transform.rotation * upper.localRotation * Quaternion.Inverse(transform.rotation) : Quaternion.identity;
@@ -312,7 +340,7 @@ namespace RoadSafety.AI
                 Leg(legR, rThigh, rCalf, rFoot);
             }
 
-            // arms, hanging a little away from the hips
+            // arms: the AI's arm limbs (wave, tea, gesture) are copied to the body
             Arm(armL, lUpper, lFore, lHand, -1f);
             Arm(armR, rUpper, rFore, rHand, 1f);
 
@@ -335,7 +363,7 @@ namespace RoadSafety.AI
             Vector3 dir = limb.rotation * Vector3.down;
             if (pitch > -20f) // hanging: keep it clear of the body
                 dir = Quaternion.AngleAxis(side * 9f, transform.forward) * dir;
-            // elbow: bent most when the hand comes to the mouth (tea), straighter when raised high (waving, "I want to cross")
+            // elbow: bent most when the hand comes to the mouth (tea), straighter when raised high (waving)
             float bend = 12f + Mathf.Sin(Mathf.Clamp01((-pitch - 20f) / 140f) * Mathf.PI) * 55f;
             Vector3 foreDir = limb.rotation * Quaternion.Euler(-bend, 0f, 0f) * Vector3.down;
             if (pitch > -20f)
