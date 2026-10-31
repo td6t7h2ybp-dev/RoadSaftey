@@ -51,10 +51,12 @@ namespace RoadSafety.AI
             BDR.BehaviorSource source = bt.GetBehaviorSource();
             nextId = 1;
             BDT.Task rootTask = Convert(root);
-            Layout(rootTask, Vector2.zero);
+            // the "Entry" node Behavior Designer draws at the top of every tree, then the root
+            // 150 px below it (at the graph origin, so neither is clipped off the top of the view)
+            Layout(rootTask, new Vector2(0f, 150f));
             var entry = new BDT.EntryTask { FriendlyName = "Entry" };
             entry.ID = 0;
-            entry.NodeData = new BDR.NodeData { Offset = new Vector2(0f, -140f) };
+            entry.NodeData = new BDR.NodeData { Offset = Vector2.zero };
             source.EntryTask = entry;
             source.DetachedTasks = new System.Collections.Generic.List<BDT.Task>();
             source.RootTask = rootTask;
