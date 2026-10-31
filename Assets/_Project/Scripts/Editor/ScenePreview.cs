@@ -72,6 +72,7 @@ namespace RoadSafety.EditorTools
                     interior.EditorBuildPreview();
                 }
                 StreetLook.Apply();
+                RoadSafety.AI.RiggedNpc.DressAll(); // townspeople and kids with the real rigged body (undone before save / Play)
                 PreviewHud();
                 PlaceCamera(interior);
             }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using RoadSafety.Core;
 
 namespace RoadSafety.AI
 {
@@ -26,6 +27,9 @@ namespace RoadSafety.AI
         private const float HideDistance = 140f;  // further than this: not drawn at all
 
         private static Texture2D stripes;
+
+        // the NPC whose primitive rig the AI animates (itself in Play mode, its parent in the Editor preview)
+        private Transform src;
 
         // the primitive rig the AI animates
         private Transform legL, legR, armL, armR, upper;
@@ -74,20 +78,32 @@ namespace RoadSafety.AI
 
         private static void Dress(GameObject go, float height)
         {
-            if (go.GetComponent<RiggedNpc>() != null)
+            if (go.GetComponentInChildren<RiggedNpc>(true) != null)
                 return;
-            var npc = go.AddComponent<RiggedNpc>();
+            RiggedNpc npc;
+            if (Application.isPlaying)
+                npc = go.AddComponent<RiggedNpc>();
+            else
+            {
+                // Editor preview (ScenePreview): never add anything to the NPC itself, so Main.unity
+                // does not change. A new child holds the body; the preview deletes it before saving / Play.
+                var holder = new GameObject("RiggedPreview");
+                holder.transform.SetParent(go.transform, false);
+                npc = holder.AddComponent<RiggedNpc>();
+            }
+            npc.src = go.transform;
             if (!npc.Build(height))
-                Destroy(npc);
+                EditorPreviewLog.Kill(Application.isPlaying ? (Object)npc : npc.gameObject);
         }
 
         private bool Build(float height)
         {
-            legL = transform.Find("Leg_L");
-            legR = transform.Find("Leg_R");
-            upper = transform.Find("Upper");
-            armL = transform.Find("Upper/Arm_L");
-            armR = transform.Find("Upper/Arm_R");
+            if (src == null) src = transform;
+            legL = src.Find("Leg_L");
+            legR = src.Find("Leg_R");
+            upper = src.Find("Upper");
+            armL = src.Find("Upper/Arm_L");
+            armR = src.Find("Upper/Arm_R");
             if (legL == null || legR == null || armL == null || armR == null)
                 return false;
             seated = legL.Find("Thigh") != null;
@@ -102,14 +118,14 @@ namespace RoadSafety.AI
             model = body.transform;
             if (!FindBones())
             {
-                Destroy(body);
+                EditorPreviewLog.Kill(body);
                 return false;
             }
 
             // hide the capsules (not the speech bubble)
-            foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+            foreach (Renderer r in src.GetComponentsInChildren<Renderer>(true))
                 if (!r.transform.IsChildOf(model) && !InBubble(r.transform))
-                    r.enabled = false;
+                    EditorPreviewLog.SetEnabled(r, false); // remembered, so the preview can undo it
 
             Clothe(body, top, bottom);
 
@@ -143,21 +159,21 @@ namespace RoadSafety.AI
             for (int i = 0; i < posed.Length; i++)
                 if (posed[i] != null) posedRest[i] = posed[i].localRotation;
             hipRest = hip.localPosition;
-            phase = Hash01(name) * 10f;
+            phase = Hash01(src.name) * 10f;
             Pose();
             return true;
         }
 
         private bool InBubble(Transform t)
         {
-            for (; t != null && t != transform; t = t.parent)
+            for (; t != null && t != src; t = t.parent)
                 if (t.name == "TalkBubble") return true;
             return false;
         }
 
         private Color ColourOf(string a, string b, Color fallback)
         {
-            foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+            foreach (Renderer r in src.GetComponentsInChildren<Renderer>(true))
                 if ((r.name == a || r.name == b) && r.sharedMaterial != null)
                 {
                     Material m = r.sharedMaterial;
@@ -169,7 +185,7 @@ namespace RoadSafety.AI
 
         private void Clothe(GameObject body, Color top, Color bottom)
         {
-            bool striped = Hash01(name + "s") < 0.3f;
+            bool striped = Hash01(src.name + "s") < 0.3f;
             var list = new List<Renderer>();
             foreach (Renderer r in body.GetComponentsInChildren<Renderer>(true))
             {
