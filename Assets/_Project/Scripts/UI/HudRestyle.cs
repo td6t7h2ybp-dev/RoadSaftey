@@ -49,38 +49,20 @@ namespace RoadSafety.UI
             Set(ui.go, Cached("go", GoPedal));
             Set(ui.stop, Cached("stop", StopSign));
 
-            Sprite pill = Cached("pill", Pill);
-            foreach (Image img in new[] { Panel(ui.starCounter), Panel(ui.hearts.Length > 0 ? ui.hearts[0].transform.parent as RectTransform : null), Panel(ui.levelText != null ? ui.levelText.transform.parent as RectTransform : null) })
-                if (img != null)
-                {
-                    img.sprite = pill;
-                    img.type = Image.Type.Sliced;
-                    img.pixelsPerUnitMultiplier = 2.4f;
-                    img.color = Color.white;
-                }
-            foreach (Text t in new[] { ui.starCount, ui.levelText })
-                if (t != null)
-                {
-                    t.color = Paper;
-                    var o = t.GetComponent<Outline>();
-                    if (o != null) o.enabled = false;
-                    var s = t.GetComponent<Shadow>();
-                    if (s != null) s.enabled = false;
-                }
+            // The counters and the speech bubble keep the game's own panels (ui_panel.png), so the
+            // saved scene, the Editor and Play mode always look the same.
+        }
 
-            // the friend's speech bubble: white card, ink outline, ink text
-            if (ui.bubble != null)
-            {
-                Image card = Panel(ui.bubble);
-                if (card != null)
-                {
-                    card.sprite = Cached("card", Card);
-                    card.type = Image.Type.Sliced;
-                    card.pixelsPerUnitMultiplier = 2.4f;
-                    card.color = Color.white;
-                }
-                if (ui.bubbleText != null) ui.bubbleText.color = Ink;
-            }
+        /// <summary>The new buttons, by the name of the HUD sprite file they replace (HudBake writes them).</summary>
+        public static System.Collections.Generic.IEnumerable<(string file, Sprite sprite)> BakeList()
+        {
+            yield return ("btn_left", Cached("left", () => Round((x, y) => Arrow(-x, y), Blue)));
+            yield return ("btn_right", Cached("right", () => Round((x, y) => Arrow(x, y), Blue)));
+            yield return ("btn_horn", Cached("horn", () => Round(Horn, Yellow)));
+            yield return ("btn_settings", Cached("gear", () => Round(Gear, Blue)));
+            yield return ("btn_badges", Cached("star", () => Round(StarGlyph, Green)));
+            yield return ("btn_go", Cached("go", GoPedal));
+            yield return ("btn_stop", Cached("stop", StopSign));
         }
 
         private static Image Panel(RectTransform rect)
