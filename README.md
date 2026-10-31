@@ -65,7 +65,7 @@ The road runs along Z; the player drives north (+Z) in the right lane, from z = 
 | 1.5 Collision | Bounce, squash, dizzy stars, -1 star, "انتبه، انظر قبل أن تتقدّم!", restarts after 2.5 s | `CrashFeedback` |
 | 2.1 Traffic light | Light turns red as the child arrives; stop and go on green = star, run the red = heart lost | `TrafficLight`, `RedLightRule` |
 | 2.2 Pedestrians | The school kid waits at the kerb until the car stops, crosses, says thank you = star; passing = heart lost | `Pedestrian`, `CrosswalkRule` |
-| 2.3 Anticipation | "Children" sign + voice 34 m before, ball rolls out 17 m before; at 4 m/s or less = bonus star | `BallEvent`, `Ball` |
+| 2.3 Anticipation | "Children" sign + voice 50 m before, ball rolls out 17 m before; at 4 m/s or less = bonus star | `BallEvent`, `Ball` |
 | 3.1 Stars | Star pops into the counter with a joyful sound | `ProgressionManager` |
 | 3.2 Badges | 6 badges, popup "شارة جديدة!", trophy button opens the badge menu | `Badges`, `BadgeTracker`, `BadgeMenu` |
 | 3.3 End screen | Stars, what you did well, what to watch, kind message, Replay / Next level | `EndScreen`, `LevelSession` |

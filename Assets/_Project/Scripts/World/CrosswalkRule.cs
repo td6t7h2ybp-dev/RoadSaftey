@@ -70,9 +70,10 @@ namespace RoadSafety.World
                 if (pedestrian.WantsToCross)
                 {
                     violated = true;
+                    // Say it first: on the last heart the gentle "try again" must be heard last.
+                    GameMessages.Say(Lines.PedestrianViolation);
                     if (ProgressionManager.Instance != null)
                         ProgressionManager.Instance.LoseHeart(Mistake.DidNotLetPedestriansCross);
-                    GameMessages.Say(Lines.PedestrianViolation);
                     pedestrian.GetScared();
                 }
             }

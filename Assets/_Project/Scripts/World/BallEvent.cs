@@ -18,7 +18,8 @@ namespace RoadSafety.World
         [SerializeField] private Ball ball;
         [SerializeField] private Transform rollTarget;
         [SerializeField] private GameObject warningSign;
-        [SerializeField, Min(5f)] private float warnDistance = 34f;
+        [Tooltip("Far enough before the release distance for the whole warning voice (3.5 s) to play at top speed (m).")]
+        [SerializeField, Min(5f)] private float warnDistance = 50f;
         [SerializeField, Min(2f)] private float releaseDistance = 17f;
         [Tooltip("At or under this speed (m/s) when the ball comes out, the child gets the bonus.")]
         [SerializeField, Min(0.5f)] private float slowSpeed = 4f;
