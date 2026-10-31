@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using RoadSafety.AI;
 using RoadSafety.Core;
 using RoadSafety.World;
 
@@ -61,6 +62,21 @@ namespace RoadSafety.Player
 
             nextAllowed = Time.time + cooldown;
             Debug.Log($"[CrashFeedback] Bumped into {collision.collider.name} ({impact:0.0} m/s).");
+            StartCoroutine(Bump());
+        }
+
+        // The school kid's collider is a trigger, so the car would otherwise drive straight through.
+        private void OnTriggerEnter(Collider other)
+        {
+            if (Time.time < nextAllowed || Mathf.Abs(car.Speed) < minImpactSpeed)
+                return; // a kid walking into a stopped car is not a crash
+            Pedestrian pedestrian = other.GetComponentInParent<Pedestrian>();
+            if (pedestrian == null)
+                return;
+
+            nextAllowed = Time.time + cooldown;
+            Debug.Log($"[CrashFeedback] Bumped into {other.name} ({Mathf.Abs(car.Speed):0.0} m/s).");
+            pedestrian.GetScared();
             StartCoroutine(Bump());
         }
 

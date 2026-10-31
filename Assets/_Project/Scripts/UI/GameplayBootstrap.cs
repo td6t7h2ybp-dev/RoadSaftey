@@ -90,6 +90,7 @@ namespace RoadSafety.UI
             car.AddComponent<CarController>();
             car.AddComponent<CrashFeedback>();
             car.AddComponent<ThreatSensor>();
+            car.AddComponent<EngineSound>();
             Camera cam = Camera.main;
             if (cam != null && cam.GetComponent<CameraFollow>() == null)
                 cam.gameObject.AddComponent<CameraFollow>().Target = car.transform;

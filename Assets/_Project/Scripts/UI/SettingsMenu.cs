@@ -48,12 +48,16 @@ namespace RoadSafety.UI
             menu.sfxButton = UIKit.MakeButton("Btn_Sfx", menu.panel, menu.sfxOn, UIKit.Middle, new Vector2(-180f, -55f), 250f);
             menu.sfxIcon = menu.sfxButton.Visual.GetComponent<Image>();
             menu.closeButton = UIKit.MakeButton("Btn_Close", menu.panel, UIKit.LoadSprite("btn_close"), UIKit.Middle, new Vector2(-385f, 235f), 120f);
-
-            menu.musicButton.Clicked += menu.ToggleMusic;
-            menu.sfxButton.Clicked += menu.ToggleSfx;
-            menu.closeButton.Clicked += menu.Close;
-            menu.backgroundButton.Clicked += menu.Close;
             return menu;
+        }
+
+        // Here and not in Build: events are not saved in the scene, and the HUD saved in Main.unity skips Build.
+        private void Start()
+        {
+            musicButton.Clicked += ToggleMusic;
+            sfxButton.Clicked += ToggleSfx;
+            closeButton.Clicked += Close;
+            backgroundButton.Clicked += Close;
         }
 
         public void Open()

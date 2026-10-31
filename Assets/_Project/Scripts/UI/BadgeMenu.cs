@@ -34,7 +34,6 @@ namespace RoadSafety.UI
             title.text = ArabicText.Fix("شاراتي");
             menu.count = UIKit.MakeText("Count", menu.panel, 52, new Vector2(470f, 360f), new Vector2(220f, 90f));
             menu.closeButton = UIKit.MakeButton("Btn_Close", menu.panel, UIKit.LoadSprite("btn_close"), UIKit.Middle, new Vector2(-560f, 365f), 120f);
-            menu.closeButton.Clicked += menu.Close;
 
             int n = Badges.All.Length;
             menu.icons = new Image[n];
@@ -53,11 +52,20 @@ namespace RoadSafety.UI
                 menu.locks[i] = lockRect.gameObject;
                 menu.titles[i] = UIKit.MakeText("Title", menu.panel, 40, position + new Vector2(0f, -140f), new Vector2(380f, 60f));
                 menu.titles[i].text = ArabicText.Fix(badge.Title);
-                BadgeInfo captured = badge;
-                button.Clicked += () => menu.ShowHowTo(captured);
             }
             menu.howTo = UIKit.MakeText("HowTo", menu.panel, 42, new Vector2(0f, -398f), new Vector2(1200f, 70f));
             return menu;
+        }
+
+        // Here and not in Build: events are not saved in the scene, and the HUD saved in Main.unity skips Build.
+        private void Start()
+        {
+            closeButton.Clicked += Close;
+            for (int i = 0; i < Badges.All.Length && i < icons.Length; i++)
+            {
+                BadgeInfo badge = Badges.All[i];
+                icons[i].GetComponentInParent<TouchButton>().Clicked += () => ShowHowTo(badge);
+            }
         }
 
         public void Open()

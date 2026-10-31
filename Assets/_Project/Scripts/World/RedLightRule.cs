@@ -17,8 +17,10 @@ namespace RoadSafety.World
         [SerializeField] private Transform stopLine;
         [Tooltip("Distance before the line where the light starts changing to red (m).")]
         [SerializeField, Min(5f)] private float triggerDistance = 34f;
-        [Tooltip("Stopping within this distance before the line counts as waiting (m).")]
-        [SerializeField, Min(2f)] private float waitZone = 18f;
+        [Tooltip("Stopping within this distance before the line counts as waiting (m). Same as the trigger distance, so stopping early still counts.")]
+        [SerializeField, Min(2f)] private float waitZone = 34f;
+        [Tooltip("Distance before the line where the avatar says the light is red (m).")]
+        [SerializeField, Min(2f)] private float warnDistance = 26f;
         [SerializeField, Min(1f)] private float roadHalfWidth = 6f;
 
         private bool triggered;
@@ -52,7 +54,7 @@ namespace RoadSafety.World
                 triggered = true;
                 trafficLight.TurnRedSoon();
             }
-            if (!warnedRed && d > 0f && d < waitZone + 8f && trafficLight.Main != LightColor.Green)
+            if (!warnedRed && d > 0f && d < warnDistance && trafficLight.Main != LightColor.Green)
             {
                 warnedRed = true;
                 GameMessages.Say(Lines.LightTurnsRed);
@@ -71,9 +73,10 @@ namespace RoadSafety.World
                 ProgressionManager progression = ProgressionManager.Instance;
                 if (trafficLight.Main == LightColor.Red)
                 {
+                    // Say it first: on the last heart the gentle "try again" must be heard last.
+                    GameMessages.Say(Lines.RanRedLight);
                     if (progression != null)
                         progression.LoseHeart(Mistake.RanRedLight);
-                    GameMessages.Say(Lines.RanRedLight);
                 }
                 else if (waited)
                 {
