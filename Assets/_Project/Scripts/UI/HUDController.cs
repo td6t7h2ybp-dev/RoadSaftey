@@ -204,11 +204,39 @@ namespace RoadSafety.UI
             ShowBubble(line);
             PlayScale(ui.avatar, 1.1f, 0.35f);
             AudioClip voice = Lines.VoiceFor(line);
+            // the friend in the car says it (same recorded voices, from their mouth)
+            if (PassengerFriend.Current != null && PassengerFriend.Current.isActiveAndEnabled)
+            {
+                PassengerFriend.Current.Say(line, voice);
+                return;
+            }
             if (voice != null && ui.voiceSource != null && AudioPrefs.SfxOn)
             {
                 ui.voiceSource.Stop();
                 ui.voiceSource.clip = voice;
                 ui.voiceSource.Play();
+            }
+        }
+
+        /// <summary>
+        /// The friend now sits in the car and the seatbelt is a real one (CarInterior):
+        /// hides the 2D avatar, its bubble tail and the seatbelt button. The bubble stays for the text.
+        /// </summary>
+        public void UseInCarFriend()
+        {
+            HudRestyle.Apply(ui); // look of the reference: dark glass buttons, white icons, pedals
+            if (ui.avatar != null) ui.avatar.gameObject.SetActive(false);
+            if (ui.belt != null)
+            {
+                ui.belt.ForceRelease();
+                ui.belt.gameObject.SetActive(false);
+            }
+            if (ui.bubble != null)
+            {
+                Transform tail = ui.bubble.Find("Tail");
+                if (tail != null) tail.gameObject.SetActive(false);
+                // the bubble now floats next to the friend's head, with a pointer to them
+                SpeechBubbleFollow.Attach(ui.bubble);
             }
         }
 

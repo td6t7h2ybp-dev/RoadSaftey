@@ -294,8 +294,8 @@ namespace RoadSafety.EditorTools
             foreach (float side in new[] { -1f, 1f })
             {
                 string s = side < 0 ? "West" : "East";
-                Box($"Sidewalk_{s}_South", roads, new Vector3(side * 6.5f, 0.1f, (RoadStart + southEnd) * 0.5f), new Vector3(3f, 0.2f, southEnd - RoadStart), "Sidewalk", true);
-                Box($"Sidewalk_{s}_North", roads, new Vector3(side * 6.5f, 0.1f, (northStart + RoadEnd) * 0.5f), new Vector3(3f, 0.2f, RoadEnd - northStart), "Sidewalk", true);
+                Box($"Sidewalk_{s}_South", roads, new Vector3(side * 8f, 0.1f, (RoadStart + southEnd) * 0.5f), new Vector3(6f, 0.2f, southEnd - RoadStart), "Sidewalk", true);
+                Box($"Sidewalk_{s}_North", roads, new Vector3(side * 8f, 0.1f, (northStart + RoadEnd) * 0.5f), new Vector3(6f, 0.2f, RoadEnd - northStart), "Sidewalk", true);
                 Box($"SideSidewalk_{s}_South", roads, new Vector3(side * 37.5f, 0.1f, SideRoadZ - 5.5f), new Vector3(65f, 0.2f, 3f), "Sidewalk", true);
                 Box($"SideSidewalk_{s}_North", roads, new Vector3(side * 37.5f, 0.1f, SideRoadZ + 5.5f), new Vector3(65f, 0.2f, 3f), "Sidewalk", true);
             }
@@ -426,7 +426,7 @@ namespace RoadSafety.EditorTools
             float height = twoFloors ? 6.6f : 3.8f;
             string wall = Chance(0.15f) ? "WallCream" : Chance(0.15f) ? "WallBlueish" : "Wall";
             // local frame: +Z of the house group points to the road (front face at z = 0)
-            Transform house = Group("House", parent, new Vector3(side * 8.6f, 0f, zCenter), side < 0f ? 90f : -90f);
+            Transform house = Group("House", parent, new Vector3(side * 11.6f, 0f, zCenter), side < 0f ? 90f : -90f);
             Box("Walls", house, new Vector3(0f, height * 0.5f, -depth * 0.5f), new Vector3(width, height, depth), wall);
             Box("Parapet", house, new Vector3(0f, height + 0.18f, -depth * 0.5f), new Vector3(width + 0.15f, 0.36f, depth + 0.15f), wall);
             if (Chance(0.4f))
@@ -520,7 +520,7 @@ namespace RoadSafety.EditorTools
                     float zz = z + (side > 0f ? 10f : 0f);
                     if (Mathf.Abs(zz - SideRoadZ) < 10f || Mathf.Abs(zz - SchoolZ) < 6f || Mathf.Abs(zz - FinishZ) < 6f || Mathf.Abs(zz - BallZ) < 8f)
                         continue;
-                    Palm(palms, new Vector3(side * 7.4f, 0.2f, zz));
+                    Palm(palms, new Vector3(side * 10.4f, 0.2f, zz)); // against the houses: the wide pavement stays free for walking
                 }
             }
         }
@@ -912,8 +912,9 @@ namespace RoadSafety.EditorTools
         private static void BuildOtherCars(Transform traffic, Dictionary<string, GameObject> models, TrafficLight light, CrosswalkRule crosswalk)
         {
             Transform cars = Group("OtherCars", traffic, Vector3.zero);
-            string[] oncomingModels = { "Taxi", "Louage", "Car_Green", "Taxi", "Car_Orange" };
-            float[] startZ = { 205f, 135f, 62f, -15f, 168f };
+            // a busy street: traffic coming the other way the whole length of the road
+            string[] oncomingModels = { "Taxi", "Louage", "Car_Green", "Taxi", "Car_Orange", "Car_Green", "Louage", "Taxi", "Car_Orange" };
+            float[] startZ = { 205f, 135f, 62f, -15f, 168f, 100f, 30f, -45f, 232f };
             var oncoming = new List<NpcCar>();
             for (int i = 0; i < oncomingModels.Length; i++)
             {

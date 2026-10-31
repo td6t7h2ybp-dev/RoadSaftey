@@ -39,7 +39,7 @@ namespace RoadSafety.EditorTools
         }
 
         private const float PavementTop = 0.2f;
-        private const float WalkLineX = 6.2f;
+        private const float WalkLineX = 7.4f; // wide pavements (6 m): people stroll in the middle
 
         private static Dictionary<string, Vector2> shopFronts;
 
@@ -85,6 +85,13 @@ namespace RoadSafety.EditorTools
                 (-1f, 108f, 182f, 0.1f), (-1f, 120f, 230f, 0.6f),
                 (1f, -62f, 16f, 0.5f), (1f, 42f, 95f, 0.3f), (1f, 42f, 95f, 0.85f),
                 (1f, 104f, 146f, 0.5f), (1f, 192f, 232f, 0.4f),
+                // a busy street: the pavements are never empty, wherever the child looks
+                (-1f, -62f, 16f, 0.45f), (-1f, -62f, 16f, 0.95f), (-1f, 44f, 94f, 0.08f),
+                (-1f, 44f, 94f, 0.8f), (-1f, 108f, 182f, 0.55f), (-1f, 108f, 182f, 0.88f),
+                (-1f, 120f, 230f, 0.25f), (-1f, 150f, 230f, 0.85f),
+                (1f, -62f, 16f, 0.15f), (1f, -62f, 16f, 0.88f), (1f, 42f, 95f, 0.6f),
+                (1f, 104f, 146f, 0.12f), (1f, 104f, 146f, 0.82f), (1f, 150f, 232f, 0.15f),
+                (1f, 192f, 232f, 0.72f),
             };
             string[] tops = { "Cloth_Teal", "Cloth_Mustard", "Cloth_Burgundy", "Cloth_Cream", "Cloth_Olive", "Cloth_Lilac", "Cloth_Denim", "Cloth_Brown" };
             string[] skins = { "Skin", "Skin_Tan", "Skin_Dark" };
@@ -109,7 +116,7 @@ namespace RoadSafety.EditorTools
 
             // two neighbours in front of the bakery
             Vector2 bakery = ShopFront("shop_bakery", -1f, 60f);
-            TalkingGroup(groups, "Group_Bakery", new Vector3(bakery.x * 7.45f, PavementTop, bakery.y + 1.5f), 0.65f, new[]
+            TalkingGroup(groups, "Group_Bakery", new Vector3(bakery.x * 9.6f, PavementTop, bakery.y + 1.5f), 0.65f, new[]
             {
                 (Headwear.Scarf, "Cloth_Lilac", "Scarf_White", true, "Skin"),
                 (Headwear.Scarf, "Cloth_Teal", "Scarf_Rose", true, "Skin_Tan"),
@@ -117,7 +124,7 @@ namespace RoadSafety.EditorTools
 
             // three men in front of the grocery
             Vector2 grocery = ShopFront("shop_grocery", 1f, 70f);
-            TalkingGroup(groups, "Group_Grocery", new Vector3(grocery.x * 7.55f, PavementTop, grocery.y - 1.5f), 0.7f, new[]
+            TalkingGroup(groups, "Group_Grocery", new Vector3(grocery.x * 9.6f, PavementTop, grocery.y - 1.5f), 0.7f, new[]
             {
                 (Headwear.Chechia, "Cloth_Cream", "", true, "Skin_Tan"),
                 (Headwear.Cap, "Cloth_Denim", "", false, "Skin"),
@@ -136,7 +143,7 @@ namespace RoadSafety.EditorTools
         private static void BuildCafe(Transform town)
         {
             Vector2 cafe = ShopFront("shop_cafe", -1f, 52f);
-            Transform terrace = Group("CafeTerrace", town, new Vector3(cafe.x * 7.55f, PavementTop, cafe.y));
+            Transform terrace = Group("CafeTerrace", town, new Vector3(cafe.x * 9.7f, PavementTop, cafe.y));
             string[] tops = { "Cloth_Cream", "Cloth_Grey", "Cloth_Burgundy", "Cloth_Olive" };
             string[] skins = { "Skin_Tan", "Skin", "Skin_Dark", "Skin" };
             int n = 0;

@@ -8,7 +8,8 @@ namespace RoadSafety.UI
     /// <summary>
     /// When a scene with a GameManager loads (Main.unity, and the same scene again after a
     /// restart), this adds what the gameplay needs if it isn't already in the scene:
-    ///   _Managers/ProgressionManager, DriverControls, BadgeTracker, the music and UI/HUD.
+    ///   _Managers/ProgressionManager, DriverControls, BadgeTracker, the music, UI/HUD and the
+    ///   inside of the player's car (CarInterior: first-person view, friend, seatbelt).
     /// If the scene's player car has no CarController yet (level not built with
     /// RoadSafety > Level > Build Level 01), a simple one is added so the car still drives.
     /// </summary>
@@ -53,6 +54,10 @@ namespace RoadSafety.UI
 
             MusicPlayer.Ensure();
             EnsurePlayerCar();
+            CarInterior.Ensure(); // first-person cockpit, driver, friend and the real seatbelt
+            RoadSafety.World.StreetLook.Apply(); // golden-hour light, paved road, balconies (art of the reference)
+            RoadSafety.AI.RiggedNpc.DressAll();  // every NPC gets the same rigged body as the friend
+            RoadSafety.World.StreetLife.Apply(); // pigeons, seagulls, palms in the breeze
 
             if (Object.FindAnyObjectByType<HUDController>() == null)
             {
