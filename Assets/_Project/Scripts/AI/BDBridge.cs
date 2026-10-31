@@ -72,7 +72,7 @@ namespace RoadSafety.AI
             {
                 int n = parent.Children.Count;
                 for (int i = 0; i < n; i++)
-                    Layout(parent.Children[i], new Vector2((i - (n - 1) * 0.5f) * 220f, 140f));
+                    Layout(parent.Children[i], new Vector2((i - (n - 1) * 0.5f) * 300f, 150f));
             }
         }
 
@@ -82,14 +82,14 @@ namespace RoadSafety.AI
             {
                 case Selector selector:
                 {
-                    var task = new BDT.Selector { FriendlyName = selector.Name };
+                    var task = new BDT.Selector { FriendlyName = "Selector: " + selector.Name };
                     for (int i = 0; i < selector.Children.Count; i++)
                         task.AddChild(Convert(selector.Children[i]), i);
                     return task;
                 }
                 case Sequence sequence:
                 {
-                    var task = new BDT.Sequence { FriendlyName = sequence.Name };
+                    var task = new BDT.Sequence { FriendlyName = "Sequence: " + sequence.Name };
                     for (int i = 0; i < sequence.Children.Count; i++)
                         task.AddChild(Convert(sequence.Children[i]), i);
                     return task;
@@ -97,15 +97,15 @@ namespace RoadSafety.AI
                 case UtilitySelector utility:
                 {
                     // fonction utilitaire: Behavior Designer picks the child with the highest GetUtility()
-                    var task = new BDT.UtilitySelector { FriendlyName = utility.Name };
+                    var task = new BDT.UtilitySelector { FriendlyName = "Utility Selector: " + utility.Name };
                     for (int i = 0; i < utility.Options.Count; i++)
                         task.AddChild(Convert(utility.Options[i].Node), i);
                     return task;
                 }
                 case Condition condition:
-                    return new AgentCondition { conditionName = condition.Name, FriendlyName = condition.Name };
+                    return new AgentCondition { conditionName = condition.Name, FriendlyName = "Conditional: " + condition.Name };
                 default:
-                    return new AgentAction { actionName = node.Name, FriendlyName = node.Name };
+                    return new AgentAction { actionName = node.Name, FriendlyName = "Action: " + node.Name };
             }
         }
     }
