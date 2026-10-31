@@ -13991,7 +13991,8 @@ MonoBehaviour:
   trafficLight: {fileID: 2065454565}
   stopLine: {fileID: 131118017}
   triggerDistance: 34
-  waitZone: 18
+  waitZone: 34
+  warnDistance: 26
   roadHalfWidth: 6
 --- !u!1 &131407505
 GameObject:
@@ -49289,7 +49290,7 @@ MonoBehaviour:
   ball: {fileID: 774812795}
   rollTarget: {fileID: 631858085}
   warningSign: {fileID: 1409538289}
-  warnDistance: 34
+  warnDistance: 50
   releaseDistance: 17
   slowSpeed: 4
   rollSpeed: 4.5
