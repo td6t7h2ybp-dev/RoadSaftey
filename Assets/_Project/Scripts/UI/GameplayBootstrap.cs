@@ -15,6 +15,8 @@ namespace RoadSafety.UI
     /// </summary>
     public static class GameplayBootstrap
     {
+        public const string EditorCoverName = "EditorCover";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
@@ -36,6 +38,13 @@ namespace RoadSafety.UI
         /// <summary>Adds what is missing; does nothing if it is already there (safe to call twice).</summary>
         private static void SetUp(Scene scene)
         {
+            // Editor-only still picture of the new look, saved in the scene so Unity never shows the
+            // bare level while Play mode stops (RoadSafety > Preview > Bake stop-screen picture).
+            // The game hides it before its first frame.
+            GameObject cover = GameObject.Find(EditorCoverName);
+            if (cover != null && cover.scene == scene)
+                cover.SetActive(false);
+
             GameManager game = Object.FindAnyObjectByType<GameManager>();
             if (game == null)
                 return; // not a gameplay scene (menu, credits...)
