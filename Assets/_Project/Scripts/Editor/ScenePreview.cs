@@ -35,7 +35,7 @@ namespace RoadSafety.EditorTools
             EditorApplication.playModeStateChanged += state =>
             {
                 if (state == PlayModeStateChange.ExitingEditMode) Clear();
-                else if (state == PlayModeStateChange.EnteredEditMode) EditorApplication.delayCall += Rebuild;
+                else if (state == PlayModeStateChange.EnteredEditMode) Rebuild(); // right away: the old saved scene is never drawn
             };
         }
 

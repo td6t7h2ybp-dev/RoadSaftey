@@ -25,17 +25,31 @@ namespace RoadSafety.UI
         private const float InkWidth = 0.06f;  // ink line width (in -1..1 units)
         private const float Lip = 0.11f;      // how far the solid lip shows under a button
 
+        // the sprites are drawn once and reused (Play mode, the Editor preview, every restart)
+        private static readonly System.Collections.Generic.Dictionary<string, Sprite> cache = new System.Collections.Generic.Dictionary<string, Sprite>();
+
+        private static Sprite Cached(string key, System.Func<Sprite> make)
+        {
+            if (cache.TryGetValue(key, out Sprite s) && s != null && s.texture != null)
+                return s;
+            s = make();
+            if (s.texture != null) s.texture.hideFlags = HideFlags.DontSave;
+            s.hideFlags = HideFlags.DontSave;
+            cache[key] = s;
+            return s;
+        }
+
         public static void Apply(HUDController.Refs ui)
         {
-            Set(ui.left, Round((x, y) => Arrow(-x, y), Blue));
-            Set(ui.right, Round((x, y) => Arrow(x, y), Blue));
-            Set(ui.horn, Round(Horn, Yellow));
-            Set(ui.settingsButton, Round(Gear, Blue));
-            Set(ui.badgesButton, Round(StarGlyph, Green));
-            Set(ui.go, GoPedal());
-            Set(ui.stop, StopSign());
+            Set(ui.left, Cached("left", () => Round((x, y) => Arrow(-x, y), Blue)));
+            Set(ui.right, Cached("right", () => Round((x, y) => Arrow(x, y), Blue)));
+            Set(ui.horn, Cached("horn", () => Round(Horn, Yellow)));
+            Set(ui.settingsButton, Cached("gear", () => Round(Gear, Blue)));
+            Set(ui.badgesButton, Cached("star", () => Round(StarGlyph, Green)));
+            Set(ui.go, Cached("go", GoPedal));
+            Set(ui.stop, Cached("stop", StopSign));
 
-            Sprite pill = Pill();
+            Sprite pill = Cached("pill", Pill);
             foreach (Image img in new[] { Panel(ui.starCounter), Panel(ui.hearts.Length > 0 ? ui.hearts[0].transform.parent as RectTransform : null), Panel(ui.levelText != null ? ui.levelText.transform.parent as RectTransform : null) })
                 if (img != null)
                 {
@@ -60,7 +74,7 @@ namespace RoadSafety.UI
                 Image card = Panel(ui.bubble);
                 if (card != null)
                 {
-                    card.sprite = Card();
+                    card.sprite = Cached("card", Card);
                     card.type = Image.Type.Sliced;
                     card.pixelsPerUnitMultiplier = 2.4f;
                     card.color = Color.white;
