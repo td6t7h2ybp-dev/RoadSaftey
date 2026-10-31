@@ -57,10 +57,14 @@ namespace RoadSafety.UI
             nextLabel.text = ArabicText.Fix("المستوى التالي");
             Text replayLabel = UIKit.MakeText("ReplayLabel", c, 44, new Vector2(-480f, -385f), new Vector2(200f, 70f));
             replayLabel.text = ArabicText.Fix("إعادة");
-
-            screen.replayButton.Clicked += screen.Replay;
-            screen.nextButton.Clicked += screen.Next;
             return screen;
+        }
+
+        // Here and not in Build: events are not saved in the scene, and the HUD saved in Main.unity skips Build.
+        private void Start()
+        {
+            replayButton.Clicked += Replay;
+            nextButton.Clicked += Next;
         }
 
         /// <summary>Remembers the badges unlocked during this level, to show them here.</summary>
