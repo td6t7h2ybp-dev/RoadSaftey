@@ -37,6 +37,8 @@ namespace RoadSafety.AI
             this.children = new List<Node>(children);
         }
 
+        public IReadOnlyList<Node> Children => children;
+
         public override NodeState Evaluate()
         {
             foreach (Node child in children)
@@ -62,6 +64,8 @@ namespace RoadSafety.AI
             this.children = new List<Node>(children);
         }
 
+        public IReadOnlyList<Node> Children => children;
+
         public override NodeState Evaluate()
         {
             foreach (Node child in children)
@@ -84,6 +88,8 @@ namespace RoadSafety.AI
             this.check = check;
         }
 
+        public Func<bool> Check => check;
+
         public override NodeState Evaluate()
         {
             return check() ? NodeState.Success : NodeState.Failure;
@@ -99,6 +105,8 @@ namespace RoadSafety.AI
         {
             this.action = action;
         }
+
+        public Func<NodeState> Run => action;
 
         public override NodeState Evaluate()
         {

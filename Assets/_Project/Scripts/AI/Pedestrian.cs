@@ -53,6 +53,7 @@ namespace RoadSafety.AI
 
         private CrosswalkRule rule;
         private Node root;
+        private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
         private float waitTimer;
         private float stateTimer;
         private float walkPhase;
@@ -145,7 +146,8 @@ namespace RoadSafety.AI
                 return;
             stateTimer += Time.deltaTime;
             moving = false;
-            root.Evaluate();
+            if (bdTree == null) bdTree = BDBridge.Create(this, root, "Pedestrian");
+            BDBridge.Tick(bdTree); // Behavior Designer runs the tree
             Animate();
         }
 

@@ -50,6 +50,7 @@ namespace RoadSafety.Player
         private CrosswalkRule crosswalk;
         private HUDController hud;
         private Node root;
+        private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
         private UtilitySelector best;
         private float timer;
         private TouchButton hinted;
@@ -105,7 +106,8 @@ namespace RoadSafety.Player
             if (timer < tickInterval)
                 return;
             timer = 0f;
-            root.Evaluate();
+            if (bdTree == null) bdTree = BDBridge.Create(this, root, "Player actions");
+            BDBridge.Tick(bdTree); // Behavior Designer runs the tree
         }
 
         // after TouchButton.Update, so the pulse is not smoothed away

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace RoadSafety.AI
 {
@@ -33,6 +34,15 @@ namespace RoadSafety.AI
         public Node LastChoice { get; private set; }
 
         public float LastScore { get; private set; }
+
+        public IReadOnlyList<UtilityOption> Options => options;
+
+        /// <summary>Called by the Behavior Designer tree when it picks a branch (BDBridge).</summary>
+        public void Report(Node chosen, float score)
+        {
+            LastChoice = chosen;
+            LastScore = score;
+        }
 
         public override NodeState Evaluate()
         {

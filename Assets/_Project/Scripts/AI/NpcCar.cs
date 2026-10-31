@@ -30,6 +30,7 @@ namespace RoadSafety.AI
 
         private Rigidbody body;
         private Node root;
+        private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
         private UtilitySelector speedChoice;
         private float speed;
         private float targetSpeed;
@@ -86,7 +87,8 @@ namespace RoadSafety.AI
         private void FixedUpdate()
         {
             float dt = Time.fixedDeltaTime;
-            root.Evaluate();
+            if (bdTree == null) bdTree = BDBridge.Create(this, root, "Other car");
+            BDBridge.Tick(bdTree); // Behavior Designer runs the tree
             float rate = targetSpeed < speed ? deceleration : acceleration;
             speed = Mathf.MoveTowards(speed, targetSpeed, rate * dt);
 

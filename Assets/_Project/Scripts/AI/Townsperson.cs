@@ -70,6 +70,7 @@ namespace RoadSafety.AI
         public Kind Role => kind;
 
         private Node tree;
+        private BehaviorDesigner.Runtime.BehaviorTree bdTree; // the Behavior Designer tree that runs it (BDBridge)
         private UtilitySelector choice;
         private DriverControls controls;
 
@@ -149,7 +150,8 @@ namespace RoadSafety.AI
                 controls = DriverControls.Instance;
                 controls.Honked += OnHonk;
             }
-            tree.Evaluate();
+            if (bdTree == null) bdTree = BDBridge.Create(this, tree, "Townsperson");
+            BDBridge.Tick(bdTree); // Behavior Designer runs the tree
             if (talkBubble != null && Mood != TownMood.Chatting && Mood != TownMood.Talking && Mood != TownMood.Seated)
                 talkBubble.SetActive(false);
         }
