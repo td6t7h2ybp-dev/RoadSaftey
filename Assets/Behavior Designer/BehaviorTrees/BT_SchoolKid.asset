@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b23f08d2ae4cba14087c1ed36193d82b, type: 3}
+  m_Name: BT_SchoolKid
+  m_EditorClassIdentifier: 
+  mBehaviorSource:
+    behaviorName: Behavior
+    behaviorDescription: 
+    mTaskData:
+      types: []
+      parentIndex: 
+      startIndex: 
+      variableStartIndex: 
+      JSONSerialization: '{"EntryTask":{"Type":"BehaviorDesigner.Runtime.Tasks.EntryTask","NodeData":{"Offset":"(905.6669,26.9230957)"},"ID":0,"Name":"Entry","Instant":true},"RootTask":{"Type":"BehaviorDesigner.Runtime.Tasks.Selector","NodeData":{"Offset":"(-4.33313,116.923096)"},"ID":1,"Name":"Selector","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-525.8716,170.256409)"},"ID":2,"Name":"Sequence","Instant":true,"AbortTypeabortType":"LowerPriority","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.CarRushesWhileCrossing","NodeData":{"Offset":"(4.12832642,141.2821)"},"ID":3,"Name":"Car
+        Rushes While Crossing","Instant":true},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.StartSteppingBack","NodeData":{"Offset":"(4.12832642,295.128235)"},"ID":4,"Name":"Start
+        Stepping Back","Instant":true}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-397.6665,170.256409)"},"ID":5,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.KidStateIs","NodeData":{"Offset":"(2.33355713,141.282074)"},"ID":6,"Name":"Kid
+        State Is","Instant":true,"PedestrianStatestate":"SteppingBack"},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.RunBackToKerb","NodeData":{"Offset":"(2.33355713,295.128235)"},"ID":7,"Name":"Run
+        Back To Kerb","Instant":true}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-282.28186,170.256439)"},"ID":8,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.KidStateIs","NodeData":{"Offset":"(-2.28186035,141.282074)"},"ID":9,"Name":"Kid
+        State Is","Instant":true,"PedestrianStatestate":"Crossing"},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.CrossTheRoad","NodeData":{"Offset":"(-2.28198242,295.128235)"},"ID":10,"Name":"Cross
+        The Road","Instant":true}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-154.076721,170.256439)"},"ID":11,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.ReadyToCross","NodeData":{"Offset":"(-4.076782,141.282135)"},"ID":12,"Name":"Ready
+        To Cross","Instant":true},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.StartCrossing","NodeData":{"Offset":"(-4.076721,295.128174)"},"ID":13,"Name":"Start
+        Crossing","Instant":true}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-25.8717041,170.25647)"},"ID":14,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.KidStateIs","NodeData":{"Offset":"(-8.6922,141.282074)"},"ID":15,"Name":"Kid
+        State Is","Instant":true,"PedestrianStatestate":"WalkingToKerb"},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.WalkToTheKerb","NodeData":{"Offset":"(-8.692139,295.128174)"},"ID":16,"Name":"Walk
+        To The Kerb","Instant":true}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(102.333496,170.2565)"},"ID":17,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HasCrossed","NodeData":{"Offset":"(-10.4869995,141.282135)"},"ID":18,"Name":"Has
+        Crossed","Instant":true},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.ThankAndLeave","NodeData":{"Offset":"(-10.4869995,295.128235)"},"ID":19,"Name":"Thank
+        And Leave","Instant":true}]},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.WaitHandUp","NodeData":{"Offset":"(230.5387,170.2565)"},"ID":20,"Name":"Wait
+        Hand Up","Instant":true}]}}'
+      fieldSerializationData:
+        typeName: []
+        fieldNameHash: 
+        startIndex: 
+        dataPosition: 
+        unityObjects: []
+        byteData: 
+        byteDataArray: 
+      Version: 1.7.12

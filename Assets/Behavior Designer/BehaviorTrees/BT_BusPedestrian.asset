@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b23f08d2ae4cba14087c1ed36193d82b, type: 3}
+  m_Name: BT_BusPedestrian
+  m_EditorClassIdentifier: 
+  mBehaviorSource:
+    behaviorName: Behavior
+    behaviorDescription: 
+    mTaskData:
+      types: []
+      parentIndex: 
+      startIndex: 
+      variableStartIndex: 
+      JSONSerialization: '{"EntryTask":{"Type":"BehaviorDesigner.Runtime.Tasks.EntryTask","NodeData":{"Offset":"(431.049438,-242.837784)"},"ID":0,"Name":"Entry","Instant":true},"RootTask":{"Type":"BehaviorDesigner.Runtime.Tasks.Selector","NodeData":{"Offset":"(1.04943848,117.162216)"},"ID":1,"Name":"Selector","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-641.53125,253.9364)"},"ID":2,"Name":"Sequence","Instant":true,"AbortTypeabortType":"LowerPriority","Children":[{"Type":"RoadSafety.AI.Pedestrians.IsOnRoad","NodeData":{"Offset":"(-143.466736,335.549347)"},"ID":3,"Name":"Is
+        On Road","Instant":true},{"Type":"RoadSafety.AI.Pedestrians.CarAboutToHitMe","NodeData":{"Offset":"(-54.43445,496.8396)"},"ID":4,"Name":"Car
+        About To Hit Me","Instant":true},{"Type":"RoadSafety.AI.Pedestrians.MoveToPoint","NodeData":{"Offset":"(52.6622925,335.549347)"},"ID":5,"Name":"Move
+        To Point","Instant":true,"PedestrianPointpoint":"HideSpot","SharedFloatspeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":3.4},"SharedBoolstartled":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":null,"BooleanmValue":true}},{"Type":"RoadSafety.AI.Pedestrians.LeaveRoad","NodeData":{"Offset":"(141.69458,496.8396)"},"ID":6,"Name":"Leave
+        Road","Instant":true,"SharedBoolswapKerbs":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":null,"BooleanmValue":false},"SharedBoolswapIfAtFarKerb":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":null,"BooleanmValue":false}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-320.2409,253.9364)"},"ID":7,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.Pedestrians.IsOnRoad","NodeData":{"Offset":"(-71.20868,335.549347)"},"ID":8,"Name":"Is
+        On Road","Instant":true},{"Type":"RoadSafety.AI.Pedestrians.MoveToPoint","NodeData":{"Offset":"(17.8236084,496.8396)"},"ID":9,"Name":"Move
+        To Point","Instant":true,"PedestrianPointpoint":"FarKerb","SharedFloatspeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":1.9},"SharedBoolstartled":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":null,"BooleanmValue":false}},{"Type":"RoadSafety.AI.Pedestrians.MarkGone","NodeData":{"Offset":"(106.855896,335.549347)"},"ID":10,"Name":"Mark
+        Gone","Instant":true}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-69.918335,253.9364)"},"ID":11,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.Pedestrians.IsGone","NodeData":{"Offset":"(-50.2409363,496.8396)"},"ID":12,"Name":"Is
+        Gone","Instant":true},{"Type":"RoadSafety.AI.Pedestrians.MoveToPoint","NodeData":{"Offset":"(19.4364624,350.387878)"},"ID":13,"Name":"Move
+        To Point","Instant":true,"PedestrianPointpoint":"Exit","SharedFloatspeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":1.3},"SharedBoolstartled":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":null,"BooleanmValue":false}},{"Type":"RoadSafety.AI.Pedestrians.RespawnBehindBus","NodeData":{"Offset":"(116.855804,511.678223)"},"ID":14,"Name":"Respawn
+        Behind Bus","Instant":true,"SharedFloatafterSeconds":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":8},"SharedFloatplayerAwayDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":45}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.UtilitySelector","NodeData":{"Offset":"(179.113892,253.9364)"},"ID":15,"Name":"Utility
+        Selector","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.Pedestrians.StayHiddenBehindBus","NodeData":{"Offset":"(-60.2409668,350.387878)"},"ID":16,"Name":"Stay
+        Hidden Behind Bus","Instant":true,"SharedFloatutility":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":0.35},"SharedFloatrerollEvery":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":0.5}},{"Type":"RoadSafety.AI.Pedestrians.SurgeOutFromBus","NodeData":{"Offset":"(52.66223,495.5492)"},"ID":17,"Name":"Surge
+        Out From Bus","Instant":true,"SharedFloattriggerNear":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":12},"SharedFloattriggerFar":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":38}}]}]}}'
+      fieldSerializationData:
+        typeName: []
+        fieldNameHash: 
+        startIndex: 
+        dataPosition: 
+        unityObjects: []
+        byteData: 
+        byteDataArray: 
+      Version: 1.7.12

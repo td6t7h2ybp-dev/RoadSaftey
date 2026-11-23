@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b23f08d2ae4cba14087c1ed36193d82b, type: 3}
+  m_Name: BT_TrafficLight
+  m_EditorClassIdentifier: 
+  mBehaviorSource:
+    behaviorName: Behavior
+    behaviorDescription: 
+    mTaskData:
+      types: []
+      parentIndex: 
+      startIndex: 
+      variableStartIndex: 
+      JSONSerialization: '{"EntryTask":{"Type":"BehaviorDesigner.Runtime.Tasks.EntryTask","NodeData":{"Offset":"(463.5925,75.1064)"},"ID":0,"Name":"Entry","Instant":true},"RootTask":{"Type":"BehaviorDesigner.Runtime.Tasks.Selector","NodeData":{"Offset":"(-9.227987,140.747437)"},"ID":1,"Name":"Selector","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-376.6203,150.851074)"},"ID":2,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.LightPhaseIs","NodeData":{"Offset":"(-49.8117752,149.787231)"},"ID":3,"Name":"Light
+        Phase Is","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":0}},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HoldPhase","NodeData":{"Offset":"(77.84778,149.7873)"},"ID":4,"Name":"Hold
+        Phase","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":0}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-167.872314,160)"},"ID":5,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.LightPhaseIs","NodeData":{"Offset":"(-50,149.999878)"},"ID":6,"Name":"Light
+        Phase Is","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":1}},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HoldPhase","NodeData":{"Offset":"(80,149.999878)"},"ID":7,"Name":"Hold
+        Phase","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":1}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(108.72345,160)"},"ID":8,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.LightPhaseIs","NodeData":{"Offset":"(-50,149.999878)"},"ID":9,"Name":"Light
+        Phase Is","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":2}},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HoldPhase","NodeData":{"Offset":"(80,149.999878)"},"ID":10,"Name":"Hold
+        Phase","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":2}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(353.404358,160)"},"ID":11,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.LightPhaseIs","NodeData":{"Offset":"(-50,149.999878)"},"ID":12,"Name":"Light
+        Phase Is","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":3}},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HoldPhase","NodeData":{"Offset":"(80,149.999878)"},"ID":13,"Name":"Hold
+        Phase","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":3}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(598.0852,160)"},"ID":14,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.LightPhaseIs","NodeData":{"Offset":"(-50,149.999878)"},"ID":15,"Name":"Light
+        Phase Is","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":4}},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HoldPhase","NodeData":{"Offset":"(80,149.999878)"},"ID":16,"Name":"Hold
+        Phase","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":4}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(822.307739,394.0426)"},"ID":17,"Name":"Sequence","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"RoadSafety.AI.BehaviorDesignerTasks.LightPhaseIs","NodeData":{"Offset":"(-50,149.999878)"},"ID":18,"Name":"Light
+        Phase Is","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":5}},{"Type":"RoadSafety.AI.BehaviorDesignerTasks.HoldPhase","NodeData":{"Offset":"(80,149.999878)"},"ID":19,"Name":"Hold
+        Phase","Instant":true,"SharedIntphase":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":null,"Int32mValue":5}}]}]}}'
+      fieldSerializationData:
+        typeName: []
+        fieldNameHash: 
+        startIndex: 
+        dataPosition: 
+        unityObjects: []
+        byteData: 
+        byteDataArray: 
+      Version: 1.7.12
