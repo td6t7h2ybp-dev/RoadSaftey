@@ -63,6 +63,7 @@ namespace RoadSafety.Core
         public const string Finish = "وصلت بالسلامة!";
         public const string WrongLane = "انتبه! سيّارة أمامك";
         public const string TryAgain = "لا بأس! لنحاول مرة أخرى";
+        public const string NearMiss = "انتبه! كدت تصدم شخصًا";
 
         private static readonly Dictionary<string, string> Voices = new Dictionary<string, string>
         {
@@ -82,6 +83,7 @@ namespace RoadSafety.Core
             { Finish, "vo_finish" },
             { WrongLane, "vo_wrong_lane" },
             { TryAgain, "vo_try_again" },
+            { NearMiss, "vo_near_miss" },
         };
 
         private static readonly Dictionary<string, AudioClip> Cache = new Dictionary<string, AudioClip>();

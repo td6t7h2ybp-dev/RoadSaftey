@@ -26,12 +26,16 @@ namespace RoadSafety.AI.Pedestrians
         {
             if (agent == null) return;
             agent.currentTask = FriendlyName;
+            UtilityAI.Act(agent, FriendlyName, NodeState.Running); // central action gateway (US 5.3)
         }
 
-        /// <summary>Utility clamped to 0..1 and shown above the pedestrian's head.</summary>
+        /// <summary>
+        /// Scores this option with the game's central utility function (UtilityAI.Score, US 5.3):
+        /// clamped to 0..1 and shown above the pedestrian's head.
+        /// </summary>
         protected float Report(float u)
         {
-            u = Mathf.Clamp01(u);
+            u = UtilityAI.Score(agent, FriendlyName, u);
             if (agent != null) agent.ReportUtility(FriendlyName, u);
             return u;
         }
