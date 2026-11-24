@@ -490,4 +490,30 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
         public override float GetUtility() => Utility(agent != null ? agent.FlapUtility() : 0f);
         public override TaskStatus OnUpdate() => Do(agent.Flap());
     }
+
+    // ===================================================================== utility root
+
+    [TaskCategory("Custom/Utility")]
+    [TaskDescription("One branch under the Utility Selector at the top of a tree. Its utility is a fixed number " +
+                     "(higher = more important), and 0 while the branch's first condition is false. Runs its child as is.")]
+    public class UtilityBranch : Decorator
+    {
+        public SharedFloat utility = 0.5f;
+        private TaskStatus status = TaskStatus.Inactive;
+
+        public override float GetUtility()
+        {
+            float u = utility.Value;
+            // the branch's first condition (e.g. "Something in front?") is false: not this branch
+            if (Children != null && Children.Count > 0 && Children[0] is ParentTask branch &&
+                branch.Children != null && branch.Children.Count > 0 && branch.Children[0] is Conditional condition &&
+                condition.OnUpdate() == TaskStatus.Failure)
+                u = 0f;
+            return UtilityAI.Score(transform, FriendlyName, u);
+        }
+
+        public override bool CanExecute() => status == TaskStatus.Inactive || status == TaskStatus.Running;
+        public override void OnChildExecuted(TaskStatus childStatus) => status = childStatus;
+        public override void OnEnd() => status = TaskStatus.Inactive;
+    }
 }
