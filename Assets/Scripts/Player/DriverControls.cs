@@ -12,7 +12,7 @@ namespace RoadSafety.Player
     /// The car controller only READS the values, for example in its FixedUpdate:
     /// <code>
     ///     DriverControls input = DriverControls.Instance;
-    ///     float throttle = input.Throttle;   // 0..1 while Go is held (seatbelt or not: the child chooses, US 1.3)
+    ///     float throttle = input.Throttle;   // 0..1 while Go is held, only once the seatbelt is on (US 1.3)
     ///     bool  braking  = input.Braking;    // Stop button held (US 1.1)
     ///     float steer    = input.Steer;      // -1 (left) .. +1 (right), ramps up while held (US 1.2)
     /// </code>
@@ -67,11 +67,10 @@ namespace RoadSafety.Player
         public bool SeatbeltOn { get; private set; }
 
         /// <summary>
-        /// False only while the level is restarting / finished or the car is frozen after a bump.
-        /// The seatbelt does NOT block the car (US 1.3): the child is free to drive without it, and
-        /// the game teaches them instead (voice reminders from the player's tree, no seatbelt star).
+        /// False until the seatbelt is fastened, and while the level is restarting / finished or the
+        /// car is frozen after a bump. Pressing Go without the belt only plays the reminder voice.
         /// </summary>
-        public bool CanDrive => !IsLocked;
+        public bool CanDrive => !IsLocked && SeatbeltOn;
 
         /// <summary>True once the child has driven off without the seatbelt in this level: the seatbelt star is lost.</summary>
         public bool DroveWithoutSeatbelt { get; private set; }
@@ -233,7 +232,7 @@ namespace RoadSafety.Player
 
         private void OnAcceleratePressed()
         {
-            // The car starts even without the seatbelt, but a voice asks the child to put it on (US 1.3).
+            // No seatbelt, no driving: the voice asks the child to put it on first (US 1.3).
             if (!SeatbeltOn)
                 RemindSeatbelt();
         }

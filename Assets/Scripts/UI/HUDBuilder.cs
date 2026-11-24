@@ -16,7 +16,7 @@ namespace RoadSafety.UI
     ///   bottom-centre: horn
     ///   bottom-right : Go, with the red Stop button under it
     ///
-    /// Sprites are in Assets/_Project/UI/Resources/HUD, the Arabic font in .../Resources/Fonts.
+    /// Sprites are in Assets/UI/Resources/HUD, the Arabic font in .../Resources/Fonts.
     /// Style: flat colours with a dark-blue outline, Sidi Bou Said blue, door studs, an arched
     /// blue door around the avatar (Tunisian inspiration, charte: bleu ciel / vert pomme / jaune soleil).
     /// </summary>

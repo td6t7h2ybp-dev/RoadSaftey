@@ -309,7 +309,7 @@ namespace RoadSafety.AI.Pedestrians
             {
                 hitCounted = true;
                 Debug.Log($"[{name}] The player's car hit me!");
-                GameMessages.Say("انتبه! كدت تصدم شخصًا");
+                GameMessages.Say(Lines.NearMiss); // voiced too (US 5.1)
                 if (ProgressionManager.Instance != null)
                     ProgressionManager.Instance.LoseHeart("Hit a pedestrian (" + kind + ")");
             }

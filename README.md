@@ -20,7 +20,7 @@ Assets/
   _Project/                      <- all our own work goes here
     Scenes/Main.unity            the level (built by RoadSafety > Level > Build Level 01)
     Scripts/
-      AI/        BehaviorTree (Node, Selector, Sequence...), UtilitySelector, NpcCar, Pedestrian, TrafficDirector
+      AI/        UtilityAI (central utility function), Behavior Designer tasks, NpcCar, Pedestrian, TrafficDirector
       Core/      GameManager, ProgressionManager (stars, hearts), Badges, BadgeTracker, LevelSession,
                  GameMessages (every Arabic line + its voice), AudioPrefs, MusicPlayer, DebugView
       Player/    DriverControls (all child actions), CarController, CameraFollow, CrashFeedback,
@@ -75,6 +75,14 @@ The road runs along Z; the player drives north (+Z) in the right lane, from z = 
 | 4.3 BT + utility | NPC cars and the pedestrian run behaviour trees; cars pick cruise / slow down by utility score | `BehaviorTree`, `UtilitySelector`, `NpcCar`, `Pedestrian` |
 | 4.4 Audio settings | Gear button: music on/off, sound effects on/off (icons only, saved) | `SettingsMenu`, `AudioPrefs` |
 | 4.5 Multi-resolution | Canvas Scale With Screen Size 1920x1080, match 0.5; checked at 16:10 and 1366x768 | `HUDBuilder` |
+
+## Semaine 9 (Epic 5: interface, art & technique)
+
+| US | What it adds | Where |
+|---|---|---|
+| 5.1 Arabic voice | Every instruction has a Modern Standard Arabic voice line (the near-miss warning too). Placeholder voices must be replaced by a **child's** recording | `GameMessages`, `Docs/VO_Child_Recording.md` |
+| 5.2 Style guide | One palette in `UIKit` (bleu ciel, vert pomme, jaune soleil + stop red), rounded stickers and panels, UI style guide, icon test with children | `UIKit`, `HudRestyle`, `Docs/UI_StyleGuide.md`, `Docs/Icon_Readability_Test.md` |
+| 5.3 BT + utility | Every AI runs a Behavior Designer tree; every option is scored by **one central utility function** and every action step goes through it | `AI/UtilityAI.cs` (`Score`, `Act`), `BehaviorDesignerTasks/GameTasks.cs`, `Pedestrians/PedestrianTasks.cs` |
 
 **Next level** keeps the same street with more and faster traffic and shorter lights (`LevelSession`).
 **RoadSafety > Setup > Android tablet settings** sets landscape only and the app id `com.isamm.roadsafety`.

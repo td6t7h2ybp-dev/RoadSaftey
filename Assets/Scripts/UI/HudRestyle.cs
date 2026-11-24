@@ -7,20 +7,19 @@ namespace RoadSafety.UI
     /// The HUD in a flat "sticker" style, like a mobile kids' game: solid colour buttons with a
     /// thick ink outline, a solid lip underneath (no gradients, no glow, no glassy bevels),
     /// chunky white icons. Counters are dark ink pills with white numbers so they read on any
-    /// background. Go is a green pedal with arrows, Stop a red octagon, the shape every child
-    /// already knows from the street. Buttons, places and behaviour do not change.
+    /// background. Go is a green pedal with arrows, Stop a red pedal with two white bars. Buttons, places and behaviour do not change.
     /// Every sprite is drawn in code (no new image files).
     /// </summary>
     public static class HudRestyle
     {
         private const int Size = 256;
-        public static readonly Color Ink = new Color32(30, 27, 46, 255);       // outlines and text
-        private static readonly Color Paper = new Color32(255, 252, 245, 255);  // icons, bubble
-        private static readonly Color Red = new Color32(236, 86, 76, 255);      // Stop: red, softened
-        private static readonly Color Green = new Color32(126, 204, 72, 255);   // vert pomme
-        private static readonly Color Yellow = new Color32(255, 206, 60, 255);  // jaune soleil
-        private static readonly Color Blue = new Color32(92, 184, 240, 255);    // bleu ciel
-        private static readonly Color Orange = new Color32(255, 128, 56, 255);
+        public static readonly Color Ink = UIKit.Ink;          // outlines and text
+        private static readonly Color Paper = UIKit.Paper;     // icons, bubble
+        private static readonly Color Red = UIKit.StopRed;     // Stop: red, softened
+        private static readonly Color Green = UIKit.AppleGreen; // vert pomme
+        private static readonly Color Yellow = UIKit.SunYellow; // jaune soleil
+        private static readonly Color Blue = UIKit.SkyBlue;    // bleu ciel
+        private static readonly Color Orange = UIKit.WarmOrange;
 
         private const float InkWidth = 0.06f;  // ink line width (in -1..1 units)
         private const float Lip = 0.11f;      // how far the solid lip shows under a button
@@ -47,7 +46,7 @@ namespace RoadSafety.UI
             Set(ui.settingsButton, Cached("gear", () => Round(Gear, Blue)));
             Set(ui.badgesButton, Cached("star", () => Round(StarGlyph, Green)));
             Set(ui.go, Cached("go", GoPedal));
-            Set(ui.stop, Cached("stop", StopSign));
+            Set(ui.stop, Cached("brake", BrakePedal));
 
             // The counters and the speech bubble keep the game's own panels (ui_panel.png), so the
             // saved scene, the Editor and Play mode always look the same.
@@ -62,7 +61,7 @@ namespace RoadSafety.UI
             yield return ("btn_settings", Cached("gear", () => Round(Gear, Blue)));
             yield return ("btn_badges", Cached("star", () => Round(StarGlyph, Green)));
             yield return ("btn_go", Cached("go", GoPedal));
-            yield return ("btn_stop", Cached("stop", StopSign));
+            yield return ("btn_stop", Cached("brake", BrakePedal));
         }
 
         private static Image Panel(RectTransform rect)
@@ -176,6 +175,14 @@ namespace RoadSafety.UI
         private static Sprite GoPedal() =>
             Sticker((x, y) => RoundRect(x / Mathf.Lerp(1f, 0.86f, (y + 1f) * 0.5f), y, 0.5f, 0.76f, 0.24f), Chevrons, Green);
 
+        /// <summary>Stop: a red pedal like Go (same shape and style) with two thick white bars, "=" for "brake / stop".</summary>
+        private static Sprite BrakePedal() =>
+            Sticker((x, y) => RoundRect(x / Mathf.Lerp(1f, 0.86f, (y + 1f) * 0.5f), y, 0.5f, 0.76f, 0.24f), BrakeBars, Red);
+
+        private static float BrakeBars(float x, float y) =>
+            Mathf.Min(Box(x, y, 0f, 0.3f, 0.6f, 0.17f), Box(x, y, 0f, -0.36f, 0.6f, 0.17f));
+
+        // previous octagon design (unused, kept to switch back)
         private static Sprite StopSign() =>
             Sticker(Octagon, (x, y) => Box(x, y, 0f, 0f, 0.82f, 0.22f), Red);
 

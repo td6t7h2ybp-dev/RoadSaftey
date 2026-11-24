@@ -7,6 +7,8 @@ using RoadSafety.World;
 // Behavior Designer tasks of every AI of the game (Tasks > Custom > ... in the Behavior Designer editor).
 // Conditionals answer a question, Actions do one step of work; the Actions placed under a
 // Utility Selector return their utility function (fonction d'utilité) in GetUtility().
+// Every score goes through UtilityAI.Score and every action step through UtilityAI.Act:
+// one central utility function for the whole game (US 5.3).
 // The trees are ordinary Behavior Designer trees saved on each object (RoadSafety > AI >
 // Attach Behavior Designer trees) and edited in Tools > Behavior Designer > Editor.
 // Each tree is reactive: it runs once per tick and starts again (Restart When Complete),
@@ -29,6 +31,15 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     {
         protected T agent;
         public override void OnAwake() => agent = GetComponent<T>();
+
+        /// <summary>Runs the action step through the central utility gateway (US 5.3).</summary>
+        protected TaskStatus Do(NodeState result) => Status.Of(UtilityAI.Act(agent, FriendlyName, result));
+
+        /// <summary>Same, for actions that answer yes / no.</summary>
+        protected TaskStatus Do(bool ok) => Status.Of(UtilityAI.Act(agent, FriendlyName, ok));
+
+        /// <summary>Scores this option with the central utility function (US 5.3).</summary>
+        protected float Utility(float raw) => UtilityAI.Score(agent, FriendlyName, raw);
     }
 
     // ===================================================================== traffic light
@@ -46,7 +57,7 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class HoldPhase : AgentAction<TrafficLight>
     {
         public SharedInt phase = 0;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Hold(phase.Value));
+        public override TaskStatus OnUpdate() => Do(agent.Hold(phase.Value));
     }
 
     // ===================================================================== other cars
@@ -69,14 +80,14 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     [TaskDescription("Brakes behind the obstacle.")]
     public class BrakeBehindObstacle : AgentAction<NpcCar>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Brake());
+        public override TaskStatus OnUpdate() => Do(agent.Brake());
     }
 
     [TaskCategory("Custom/Other cars")]
     [TaskDescription("Stops at the stop line.")]
     public class StopAtTheLine : AgentAction<NpcCar>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.StopAtLine());
+        public override TaskStatus OnUpdate() => Do(agent.StopAtLine());
     }
 
     [TaskCategory("Custom/Other cars")]
@@ -84,16 +95,16 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class Cruise : AgentAction<NpcCar>
     {
         public SharedFloat utility = 0.6f;
-        public override float GetUtility() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Cruise());
+        public override float GetUtility() => Utility(utility.Value);
+        public override TaskStatus OnUpdate() => Do(agent.Cruise());
     }
 
     [TaskCategory("Custom/Other cars")]
     [TaskDescription("Utility: grows from 0 to 1 when a crossing or a light is 25 m → 0 m ahead. Slows down.")]
     public class SlowDown : AgentAction<NpcCar>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.SlowDownUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.SlowDown());
+        public override float GetUtility() => Utility(agent != null ? agent.SlowDownUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.SlowDown());
     }
 
     // ===================================================================== school kid (zebra crossing)
@@ -131,49 +142,49 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     [TaskDescription("Starts jumping back to the kerb.")]
     public class StartSteppingBack : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.BeginStepBack());
+        public override TaskStatus OnUpdate() => Do(agent.BeginStepBack());
     }
 
     [TaskCategory("Custom/School kid")]
     [TaskDescription("Runs back to the kerb.")]
     public class RunBackToKerb : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.StepBack());
+        public override TaskStatus OnUpdate() => Do(agent.StepBack());
     }
 
     [TaskCategory("Custom/School kid")]
     [TaskDescription("Walks across the zebra crossing.")]
     public class CrossTheRoad : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Cross());
+        public override TaskStatus OnUpdate() => Do(agent.Cross());
     }
 
     [TaskCategory("Custom/School kid")]
     [TaskDescription("Starts crossing.")]
     public class StartCrossing : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.BeginCrossing());
+        public override TaskStatus OnUpdate() => Do(agent.BeginCrossing());
     }
 
     [TaskCategory("Custom/School kid")]
     [TaskDescription("Walks to the kerb.")]
     public class WalkToTheKerb : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.WalkToKerb());
+        public override TaskStatus OnUpdate() => Do(agent.WalkToKerb());
     }
 
     [TaskCategory("Custom/School kid")]
     [TaskDescription("Waves \"thank you\" to the driver, then walks to the school gate.")]
     public class ThankAndLeave : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.ThankAndLeave());
+        public override TaskStatus OnUpdate() => Do(agent.ThankAndLeave());
     }
 
     [TaskCategory("Custom/School kid")]
     [TaskDescription("Waits on the kerb with a hand up.")]
     public class WaitHandUp : AgentAction<Pedestrian>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Wait());
+        public override TaskStatus OnUpdate() => Do(agent.Wait());
     }
 
     // ===================================================================== townspeople
@@ -210,28 +221,28 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     [TaskDescription("Waves at the car.")]
     public class WaveAtTheCar : AgentAction<Townsperson>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Wave());
+        public override TaskStatus OnUpdate() => Do(agent.Wave());
     }
 
     [TaskCategory("Custom/Townspeople")]
     [TaskDescription("Sits, talks and drinks tea.")]
     public class SitTalkDrinkTea : AgentAction<Townsperson>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.SitAndTalk());
+        public override TaskStatus OnUpdate() => Do(agent.SitAndTalk());
     }
 
     [TaskCategory("Custom/Townspeople")]
     [TaskDescription("Talks in turn with the group.")]
     public class TalkInTurn : AgentAction<Townsperson>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.GroupTalk());
+        public override TaskStatus OnUpdate() => Do(agent.GroupTalk());
     }
 
     [TaskCategory("Custom/Townspeople")]
     [TaskDescription("Chats with the neighbour.")]
     public class ChatWithNeighbour : AgentAction<Townsperson>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Chat());
+        public override TaskStatus OnUpdate() => Do(agent.Chat());
     }
 
     [TaskCategory("Custom/Townspeople")]
@@ -239,24 +250,24 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class WalkOn : AgentAction<Townsperson>
     {
         public SharedFloat utility = 0.35f;
-        public override float GetUtility() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Walk());
+        public override float GetUtility() => Utility(utility.Value);
+        public override TaskStatus OnUpdate() => Do(agent.Walk());
     }
 
     [TaskCategory("Custom/Townspeople")]
     [TaskDescription("Utility: how sociable they are, if a neighbour is near. Greets the neighbour.")]
     public class GreetNeighbour : AgentAction<Townsperson>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.GreetUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.StartChat());
+        public override float GetUtility() => Utility(agent != null ? agent.GreetUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.StartChat());
     }
 
     [TaskCategory("Custom/Townspeople")]
     [TaskDescription("Utility: how tired they are (1 while resting). Rests a moment.")]
     public class RestAMoment : AgentAction<Townsperson>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.RestUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Rest());
+        public override float GetUtility() => Utility(agent != null ? agent.RestUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.Rest());
     }
 
     // ===================================================================== player's actions (HUD hint)
@@ -279,20 +290,20 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     [TaskDescription("Repairs the car.")]
     public class RepairCar : AgentAction<PlayerActions>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Repair());
+        public override TaskStatus OnUpdate() => Do(agent.Repair());
     }
 
     [TaskCategory("Custom/Player")]
     [TaskDescription("Rests.")]
     public class RestDriver : AgentAction<PlayerActions>
     {
-        public override TaskStatus OnUpdate() => Status.Of(agent.Rest());
+        public override TaskStatus OnUpdate() => Do(agent.Rest());
     }
 
     public abstract class PlayerUtilityAction : AgentAction<PlayerActions>
     {
         protected abstract float Score();
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(Score()) : 0f;
+        public override float GetUtility() => Utility(agent != null ? Score() : 0f);
         public override void OnStart()
         {
             if (agent != null) agent.NoteChoice(FriendlyName, GetUtility());
@@ -304,7 +315,7 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class AdviseSeatbelt : PlayerUtilityAction
     {
         protected override float Score() => agent.ScoreSeatbelt();
-        public override TaskStatus OnUpdate() => Status.Of(agent.RecommendSeatbelt());
+        public override TaskStatus OnUpdate() => Do(agent.RecommendSeatbelt());
     }
 
     [TaskCategory("Custom/Player")]
@@ -312,7 +323,7 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class AdviseBrake : PlayerUtilityAction
     {
         protected override float Score() => agent.ScoreBrake();
-        public override TaskStatus OnUpdate() => Status.Of(agent.RecommendBrake());
+        public override TaskStatus OnUpdate() => Do(agent.RecommendBrake());
     }
 
     [TaskCategory("Custom/Player")]
@@ -320,7 +331,7 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class AdviseHonk : PlayerUtilityAction
     {
         protected override float Score() => agent.ScoreHonk();
-        public override TaskStatus OnUpdate() => Status.Of(agent.RecommendHonk());
+        public override TaskStatus OnUpdate() => Do(agent.RecommendHonk());
     }
 
     [TaskCategory("Custom/Player")]
@@ -329,7 +340,7 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     {
         public SharedFloat utility = 0.35f;
         protected override float Score() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Drive());
+        public override TaskStatus OnUpdate() => Do(agent.Drive());
     }
 
     // ===================================================================== café visitors
@@ -352,35 +363,35 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
 
     [TaskCategory("Custom/Cafe visitors")]
     [TaskDescription("Waves at the car.")]
-    public class VisitorWave : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Status.Of(agent.Wave()); }
+    public class VisitorWave : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Do(agent.Wave()); }
 
     [TaskCategory("Custom/Cafe visitors")]
     [TaskDescription("Has a coffee inside.")]
-    public class HaveCoffeeInside : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Status.Of(agent.Inside()); }
+    public class HaveCoffeeInside : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Do(agent.Inside()); }
 
     [TaskCategory("Custom/Cafe visitors")]
     [TaskDescription("Walks out and away.")]
-    public class WalkOutAndAway : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Status.Of(agent.Leave()); }
+    public class WalkOutAndAway : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Do(agent.Leave()); }
 
     [TaskCategory("Custom/Cafe visitors")]
     [TaskDescription("Walks in through the door.")]
-    public class WalkInThroughDoor : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Status.Of(agent.GoIn()); }
+    public class WalkInThroughDoor : AgentAction<CafeVisitor> { public override TaskStatus OnUpdate() => Do(agent.GoIn()); }
 
     [TaskCategory("Custom/Cafe visitors")]
     [TaskDescription("Utility: constant. Strolls on the pavement.")]
     public class VisitorStroll : AgentAction<CafeVisitor>
     {
         public SharedFloat utility = 0.35f;
-        public override float GetUtility() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Stroll());
+        public override float GetUtility() => Utility(utility.Value);
+        public override TaskStatus OnUpdate() => Do(agent.Stroll());
     }
 
     [TaskCategory("Custom/Cafe visitors")]
     [TaskDescription("Utility: curiosity (1 while looking). Looks at the shops.")]
     public class LookAtShops : AgentAction<CafeVisitor>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.LookUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.LookAround());
+        public override float GetUtility() => Utility(agent != null ? agent.LookUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.LookAround());
     }
 
     // ===================================================================== pigeons
@@ -395,35 +406,35 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("The flock flies off.")]
-    public class PigeonsTakeOff : AgentAction<PigeonFlock> { public override TaskStatus OnUpdate() => Status.Of(agent.TakeOff()); }
+    public class PigeonsTakeOff : AgentAction<PigeonFlock> { public override TaskStatus OnUpdate() => Do(agent.TakeOff()); }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Flies and lands further on.")]
-    public class PigeonsFly : AgentAction<PigeonFlock> { public override TaskStatus OnUpdate() => Status.Of(agent.Fly()); }
+    public class PigeonsFly : AgentAction<PigeonFlock> { public override TaskStatus OnUpdate() => Do(agent.Fly()); }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: constant. Pecks at crumbs.")]
     public class PigeonsPeck : AgentAction<PigeonFlock>
     {
         public SharedFloat utility = 0.5f;
-        public override float GetUtility() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Peck());
+        public override float GetUtility() => Utility(utility.Value);
+        public override TaskStatus OnUpdate() => Do(agent.Peck());
     }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: wish to hop. Hops around.")]
     public class PigeonsHop : AgentAction<PigeonFlock>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.HopWish) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Hop());
+        public override float GetUtility() => Utility(agent != null ? agent.HopWish : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.Hop());
     }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: tiredness. Rests.")]
     public class PigeonsRest : AgentAction<PigeonFlock>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.Tired) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Rest());
+        public override float GetUtility() => Utility(agent != null ? agent.Tired : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.Rest());
     }
 
     // ===================================================================== street cat
@@ -434,31 +445,31 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Dashes to the wall.")]
-    public class CatDash : AgentAction<StreetCat> { public override TaskStatus OnUpdate() => Status.Of(agent.Dash()); }
+    public class CatDash : AgentAction<StreetCat> { public override TaskStatus OnUpdate() => Do(agent.Dash()); }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: constant. Strolls.")]
     public class CatStroll : AgentAction<StreetCat>
     {
         public SharedFloat utility = 0.4f;
-        public override float GetUtility() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Stroll());
+        public override float GetUtility() => Utility(utility.Value);
+        public override TaskStatus OnUpdate() => Do(agent.Stroll());
     }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: boredom (1 while washing). Sits and washes.")]
     public class CatWash : AgentAction<StreetCat>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.WashUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Wash());
+        public override float GetUtility() => Utility(agent != null ? agent.WashUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.Wash());
     }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: sleepiness. Naps in the sun.")]
     public class CatNap : AgentAction<StreetCat>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.NapUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Nap());
+        public override float GetUtility() => Utility(agent != null ? agent.NapUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.Nap());
     }
 
     // ===================================================================== seagull
@@ -468,15 +479,15 @@ namespace RoadSafety.AI.BehaviorDesignerTasks
     public class GullGlide : AgentAction<Gull>
     {
         public SharedFloat utility = 0.5f;
-        public override float GetUtility() => utility.Value;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Glide());
+        public override float GetUtility() => Utility(utility.Value);
+        public override TaskStatus OnUpdate() => Do(agent.Glide());
     }
 
     [TaskCategory("Custom/Street life")]
     [TaskDescription("Utility: 0.9 now and then. Flaps to climb.")]
     public class GullFlap : AgentAction<Gull>
     {
-        public override float GetUtility() => agent != null ? Mathf.Clamp01(agent.FlapUtility()) : 0f;
-        public override TaskStatus OnUpdate() => Status.Of(agent.Flap());
+        public override float GetUtility() => Utility(agent != null ? agent.FlapUtility() : 0f);
+        public override TaskStatus OnUpdate() => Do(agent.Flap());
     }
 }

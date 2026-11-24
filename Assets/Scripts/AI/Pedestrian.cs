@@ -53,6 +53,7 @@ namespace RoadSafety.AI
         private float stateTimer;
         private float walkPhase;
         private bool moving;
+        private float walkBlend; // 0 standing .. 1 walking, eased so the walk fades in and out
         private Vector3 bodyRest;
 
         public static IReadOnlyList<Pedestrian> All => registered;
@@ -162,6 +163,8 @@ namespace RoadSafety.AI
         public NodeState Wait()
         {
             waitTimer += Time.deltaTime;
+            if (farKerbPoint != null)
+                Face(farKerbPoint.position); // keep turning to face the road (Face only turns a little each frame)
             CurrentAction = "Wait";
             return NodeState.Running;
         }
@@ -254,24 +257,32 @@ namespace RoadSafety.AI
 
         private void Animate()
         {
-            float swing = moving ? Mathf.Sin(walkPhase) * 30f : 0f;
-            if (leftLeg != null) leftLeg.localRotation = Quaternion.Euler(swing, 0f, 0f);
-            if (rightLeg != null) rightLeg.localRotation = Quaternion.Euler(-swing, 0f, 0f);
-            if (leftArm != null) leftArm.localRotation = Quaternion.Euler(-swing * 0.8f, 0f, 0f);
+            // the walk fades in and out (no snap to a stiff pose when they stop), and while
+            // standing the legs finish their step back to straight instead of freezing mid-stride
+            float dt = Time.deltaTime;
+            walkBlend = Mathf.MoveTowards(walkBlend, moving ? 1f : 0f, dt * 5f);
+            float swing = Mathf.Sin(walkPhase) * 30f * walkBlend;
+            float blend = 1f - Mathf.Exp(-14f * dt);
+            if (leftLeg != null) leftLeg.localRotation = Quaternion.Slerp(leftLeg.localRotation, Quaternion.Euler(swing, 0f, 0f), blend);
+            if (rightLeg != null) rightLeg.localRotation = Quaternion.Slerp(rightLeg.localRotation, Quaternion.Euler(-swing, 0f, 0f), blend);
+            if (leftArm != null) leftArm.localRotation = Quaternion.Slerp(leftArm.localRotation, Quaternion.Euler(-swing * 0.8f, 0f, 0f), blend);
 
             if (rightArm != null)
             {
+                Quaternion target;
                 if (State == PedestrianState.Waiting)
-                    rightArm.localRotation = Quaternion.Euler(-160f, 0f, 0f); // hand up: "I want to cross"
+                    target = Quaternion.Euler(-160f, 0f, Mathf.Sin(stateTimer * 3f) * 6f); // hand up: "I want to cross" (a small sway, not frozen)
                 else if (State == PedestrianState.Thanking)
-                    rightArm.localRotation = Quaternion.Euler(-150f, 0f, Mathf.Sin(stateTimer * 12f) * 25f); // waving
+                    target = Quaternion.Euler(-150f, 0f, Mathf.Sin(stateTimer * 9f) * 30f); // waving "thank you"
                 else
-                    rightArm.localRotation = Quaternion.Euler(swing * 0.8f, 0f, 0f);
+                    target = Quaternion.Euler(swing * 0.8f, 0f, 0f);
+                // the arm rises / comes down in a fraction of a second instead of teleporting
+                rightArm.localRotation = Quaternion.Slerp(rightArm.localRotation, target, 1f - Mathf.Exp(-10f * dt));
             }
 
             if (body != null)
             {
-                float bob = moving ? Mathf.Abs(Mathf.Sin(walkPhase)) * 0.05f : 0f;
+                float bob = Mathf.Abs(Mathf.Sin(walkPhase)) * 0.05f * walkBlend;
                 if (State == PedestrianState.SteppingBack && stateTimer < 0.3f)
                     bob = 0.25f * (1f - stateTimer / 0.3f); // little jump of surprise
                 body.localPosition = bodyRest + Vector3.up * bob;

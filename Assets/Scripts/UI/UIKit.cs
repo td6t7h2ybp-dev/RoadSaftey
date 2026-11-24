@@ -15,9 +15,26 @@ namespace RoadSafety.UI
         public const string SpriteFolder = "HUD/";
         public const string FontPath = "Fonts/BalooBhaijaanRS-Bold";
 
+        // ---- Charte graphique (US 5.2, see Docs/UI_StyleGuide.md). Every screen takes its colours here.
+        /// <summary>Bleu ciel: steering arrows, settings, panels' accents.</summary>
+        public static readonly Color SkyBlue = new Color32(30, 182, 255, 255);
+        /// <summary>Vert pomme: Go, badges, good behaviour.</summary>
+        public static readonly Color AppleGreen = new Color32(88, 214, 60, 255);
+        /// <summary>Jaune soleil: horn, stars, highlights.</summary>
+        public static readonly Color SunYellow = new Color32(255, 212, 0, 255);
+        /// <summary>Stop only (the colour every child knows from the street), softened.</summary>
+        public static readonly Color StopRed = new Color32(255, 72, 94, 255);
+        /// <summary>Warnings (amber light, danger icon).</summary>
+        public static readonly Color WarmOrange = new Color32(255, 140, 26, 255);
+        /// <summary>Outlines of the buttons and icons.</summary>
+        public static readonly Color Ink = new Color32(30, 27, 46, 255);
+        /// <summary>Icons and speech bubble.</summary>
+        public static readonly Color Paper = new Color32(255, 252, 245, 255);
+
+        // Text colours: darker versions of the palette so they stay readable on the cream panels.
         public static readonly Color Navy = new Color32(22, 50, 92, 255);
-        public static readonly Color SoftGreen = new Color32(70, 150, 50, 255);
-        public static readonly Color SoftOrange = new Color32(214, 110, 40, 255);
+        public static readonly Color SoftGreen = new Color32(70, 150, 50, 255);   // text version of AppleGreen
+        public static readonly Color SoftOrange = new Color32(214, 110, 40, 255); // text version of WarmOrange
         public static readonly Color Dim = new Color(0.05f, 0.12f, 0.25f, 0.55f);
         public static readonly Color LimeWhite = new Color32(250, 247, 238, 245);
 
